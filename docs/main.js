@@ -108,7 +108,7 @@ function visualize(molecule) {
 
   for (let atom of molecule) {
     const geometry = new THREE.SphereGeometry(1, 32, 16);
-    const material = new THREE.MeshBasicMaterial({ color: "white" });
+    const material = new THREE.MeshPhongMaterial({ color: "white" });
     const sphere = new THREE.Mesh(geometry, material);
 
     let [x, y, z] = atom.pos;
@@ -116,6 +116,12 @@ function visualize(molecule) {
 
     scene.add(sphere);
   }
+
+  const ambientLight = new THREE.AmbientLight("white", 1);
+  scene.add(ambientLight);
+
+  const directionalLight = new THREE.DirectionalLight("white", 2);
+  scene.add(directionalLight);
 
   const camera = new THREE.PerspectiveCamera(
     75,
