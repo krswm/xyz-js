@@ -1,3 +1,5 @@
+import * as THREE from 'three';
+
 function main() {
     const fileInput = document.getElementById("file-input");
     fileInput.addEventListener("change", () => { readFile(fileInput) });
@@ -21,6 +23,7 @@ function onLoad(reader) {
     let numLines = lines.length;
     let lineIndex = 0;
 
+    let molecules = []
     while (lineIndex < numLines) {
         let numAtoms = Number(lines[lineIndex++]);
         console.log(numAtoms);
@@ -31,14 +34,14 @@ function onLoad(reader) {
         let properties = toProperties(metadata);
         console.log(properties);
 
-        let atoms = [];
+        let molecule = [];
         for (let i = 0; i < numAtoms; i++) {
             let line = lines[lineIndex++];
             let splits = line.split(/\s+/);
 
             let atom = {}
             let j = 0;
-            for (property of properties) {
+            for (let property of properties) {
                 let values = [];
                 for (let i = 0; i < property.num; i++) {
                     let value = splits[j];
@@ -56,10 +59,13 @@ function onLoad(reader) {
                 }
                 atom[property.name] = values;
             }
-            atoms.push(atom);
+            molecule.push(atom);
         }
-        console.log(atoms);
+        console.log(molecule);
+	molecules.push(molecule);
     }
+
+    visualize(molecules[0]);
 }
 
 function toMetadata(line) {
@@ -71,7 +77,7 @@ function toMetadata(line) {
     let matches = line.matchAll(/("(?:[^"\\]|\\.)*"|[^ ="[\]{}\\]*)=("(?:[^"\\]|\\.)*"|[^ ="[\]{}\\]*)/g);
 
     let metadata = {}
-    for (match of matches) {
+    for (let match of matches) {
         let [_, key, value] = match;
 
         if (value.startsWith('"')) {
@@ -100,6 +106,32 @@ function toProperties(metadata) {
     }
 
     return properties;
+}
+
+function visualize(molecule) {
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    for (let atom of molecule) {
+        const geometry = new THREE.SphereGeometry(0.02, 32, 16);
+        const material = new THREE.MeshBasicMaterial({color: 0xffffff});
+        const cube = new THREE.Mesh(geometry, material);
+        let [x, y, z] = atom.pos;
+        cube.position.x = x / 3;
+        cube.position.y = y / 3;
+        cube.position.z = z / 3;
+        scene.add(cube);
+    }
+
+    camera.position.z = 5;
+
+    function animate(time) {
+        renderer.render(scene, camera);
+    }
+    renderer.setAnimationLoop(animate);
 }
 
 main()
