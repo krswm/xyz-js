@@ -1,4 +1,5 @@
-import * as THREE from 'three';
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
 function main() {
     const fileInput = document.getElementById("file-input");
@@ -115,8 +116,12 @@ function visualize(molecule) {
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
+    const controls = new OrbitControls(camera, renderer.domElement);
+    camera.position.set(0, 20, 100);
+    controls.update();
+
     for (let atom of molecule) {
-        const geometry = new THREE.SphereGeometry(0.02, 32, 16);
+        const geometry = new THREE.SphereGeometry(0.1, 32, 16);
         const material = new THREE.MeshBasicMaterial({color: 0xffffff});
         const cube = new THREE.Mesh(geometry, material);
         let [x, y, z] = atom.pos;
@@ -129,6 +134,7 @@ function visualize(molecule) {
     camera.position.z = 5;
 
     function animate(time) {
+        controls.update();
         renderer.render(scene, camera);
     }
     renderer.setAnimationLoop(animate);
