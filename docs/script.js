@@ -18,21 +18,21 @@ function onLoad(reader) {
     lines.pop(); // Remove the blank line at the end.
     console.log(lines);
 
-    let num_lines = lines.length;
-    let line_index = 0;
+    let numLines = lines.length;
+    let lineIndex = 0;
 
-    while (line_index < num_lines) {
-        let num_atoms = Number(lines[line_index++]);
-        console.log(num_atoms);
+    while (lineIndex < numLines) {
+        let numAtoms = Number(lines[lineIndex++]);
+        console.log(numAtoms);
 
-        let comment = lines[line_index++];
-        console.log(comment);
+        let metadata = toMetadata(lines[lineIndex++]);
+        console.log(metadata);
 
-        for (let i = 0; i < num_atoms; i++) {
-            let line = lines[line_index++];
-            let split = line.split(/\s+/);
+        for (let i = 0; i < numAtoms; i++) {
+            let line = lines[lineIndex++];
+            let splits = line.split(/\s+/);
 
-            let [element, x, y, z] = split;
+            let [element, x, y, z] = splits;
             x = Number(x);
             y = Number(y);
             z = Number(z);
@@ -43,6 +43,21 @@ function onLoad(reader) {
             console.log(z);
         }
     }
+}
+
+function toMetadata(line) {
+    console.log(line);
+
+    // TODO: Improve regex.
+    let matches = line.match(/[0-9A-Za-z_]+=(?:"[^"]*"|[^" ]*)/g);
+
+    let metadata = {}
+    for (match of matches) {
+        let [_, key, value] = match.match(/([0-9A-Za-z_]+)=("[^"]*"|[^" ]*)/);
+        metadata[key] = value;
+    }
+
+    return metadata;
 }
 
 main()
