@@ -60,7 +60,7 @@ function onLoad(reader) {
   }
   console.log(molecules);
 
-  visualize(molecules[0]);
+  visualize(molecules);
 }
 
 function toMetadata(line) {
@@ -103,41 +103,8 @@ function toProperties(metadata) {
   return properties;
 }
 
-function visualize(molecule) {
+function visualize(molecules) {
   const scene = new THREE.Scene();
-
-  for (let atom of molecule) {
-    let color;
-    switch (atom.species[0]) {
-      case "H":
-        color = "white";
-        break;
-      case "C":
-        color = "gray";
-        break;
-      case "O":
-        color = "red";
-        break;
-      default:
-        color = "magenta";
-        break;
-    }
-
-    const geometry = new THREE.SphereGeometry(1, 32, 16);
-    const material = new THREE.MeshPhongMaterial({ color: color });
-    const sphere = new THREE.Mesh(geometry, material);
-
-    let [x, y, z] = atom.pos;
-    sphere.position.set(x, y, z);
-
-    scene.add(sphere);
-  }
-
-  const ambientLight = new THREE.AmbientLight("white", 1);
-  scene.add(ambientLight);
-
-  const directionalLight = new THREE.DirectionalLight("white", 2);
-  scene.add(directionalLight);
 
   const camera = new THREE.PerspectiveCamera(
     75,
@@ -154,7 +121,51 @@ function visualize(molecule) {
   camera.position.set(0, 0, 1);
   controls.update();
 
-  renderer.setAnimationLoop(() => {
+  let prevMoleculeIndex = 0;
+  renderer.setAnimationLoop((time) => {
+    let moleculeIndex = Math.floor(time / 1000) % molecules.length;
+
+    if (moleculeIndex != prevMoleculeIndex) {
+      console.log(moleculeIndex);
+
+      while (scene.children.length) {
+        scene.remove(scene.children[0]);
+      }
+
+      for (let atom of molecules[moleculeIndex]) {
+        let color;
+        switch (atom.species[0]) {
+          case "H":
+            color = "white";
+            break;
+          case "C":
+            color = "gray";
+            break;
+          case "O":
+            color = "red";
+            break;
+          default:
+            color = "magenta";
+            break;
+        }
+
+        const geometry = new THREE.SphereGeometry(1, 32, 16);
+        const material = new THREE.MeshPhongMaterial({ color: color });
+        const sphere = new THREE.Mesh(geometry, material);
+
+        let [x, y, z] = atom.pos;
+        sphere.position.set(x, y, z);
+
+        scene.add(sphere);
+      }
+
+      const ambientLight = new THREE.AmbientLight("white", 1);
+      scene.add(ambientLight);
+
+      const directionalLight = new THREE.DirectionalLight("white", 2);
+      scene.add(directionalLight);
+    }
+
     controls.update();
     renderer.render(scene, camera);
   });
