@@ -107,8 +107,24 @@ function visualize(molecule) {
   const scene = new THREE.Scene();
 
   for (let atom of molecule) {
+    let color;
+    switch (atom.species[0]) {
+      case "H":
+        color = "white";
+        break;
+      case "C":
+        color = "gray";
+        break;
+      case "O":
+        color = "red";
+        break;
+      default:
+        color = "magenta";
+        break;
+    }
+
     const geometry = new THREE.SphereGeometry(1, 32, 16);
-    const material = new THREE.MeshPhongMaterial({ color: "white" });
+    const material = new THREE.MeshPhongMaterial({ color: color });
     const sphere = new THREE.Mesh(geometry, material);
 
     let [x, y, z] = atom.pos;
