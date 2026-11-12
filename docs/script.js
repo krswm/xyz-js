@@ -1,20 +1,21 @@
-const fileInput = document.getElementById("file-input");
-fileInput.addEventListener("change", readFile);
+function main() {
+    const fileInput = document.getElementById("file-input");
+    fileInput.addEventListener("change", () => { readFile(fileInput) });
+}
 
-function readFile() {
+function readFile(fileInput) {
     const file = fileInput.files[0];
-    const reader = new FileReader();
-
-    reader.addEventListener("load", () => { onLoad(reader) });
 
     if (file) {
+        const reader = new FileReader();
+        reader.addEventListener("load", () => { onLoad(reader) });
         reader.readAsText(file)
     }
 }
 
 function onLoad(reader) {
     let lines = reader.result.split("\n");
-    lines.pop(); // Remove last blank line.
+    lines.pop(); // Remove the blank line at the end.
     console.log(lines);
 
     let num_lines = lines.length;
@@ -43,3 +44,5 @@ function onLoad(reader) {
         }
     }
 }
+
+main()
