@@ -28,20 +28,37 @@ function onLoad(reader) {
         let metadata = toMetadata(lines[lineIndex++]);
         console.log(metadata);
 
+        let properties = toProperties(metadata);
+        console.log(properties);
+
+        let atoms = [];
         for (let i = 0; i < numAtoms; i++) {
             let line = lines[lineIndex++];
             let splits = line.split(/\s+/);
 
-            let [element, x, y, z] = splits;
-            x = Number(x);
-            y = Number(y);
-            z = Number(z);
-
-            console.log(element);
-            console.log(x);
-            console.log(y);
-            console.log(z);
+            let atom = {}
+            let j = 0;
+            for (property of properties) {
+                let values = [];
+                for (let i = 0; i < property.num; i++) {
+                    let value = splits[j];
+                    switch (property.type) {
+                        case "S":
+                            values.push(value);
+                            break;
+                        case "I":
+                        case "R":
+                        case "L":
+                            values.push(Number(value));
+                            break;
+                    }
+                    j++;
+                }
+                atom[property.name] = values;
+            }
+            atoms.push(atom);
         }
+        console.log(atoms);
     }
 }
 
@@ -66,6 +83,23 @@ function toMetadata(line) {
     }
 
     return metadata;
+}
+
+function toProperties(metadata) {
+    let text = metadata["Properties"];
+    let splits = text.split(":");
+
+    let properties = []
+    for (let i = 0; i < splits.length; i += 3) {
+        let property = {
+            name: splits[i],
+            type: splits[i + 1],
+            num: Number(splits[i + 2]),
+        };
+        properties.push(property);
+    }
+
+    return properties;
 }
 
 main()
