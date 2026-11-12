@@ -121,11 +121,11 @@ function visualize(molecules) {
   camera.position.set(0, 0, 1);
   controls.update();
 
-  let prevMoleculeIndex = 0;
+  let prevMoleculeIndex = undefined;
   renderer.setAnimationLoop((time) => {
-    let moleculeIndex = Math.floor(time / 1000) % molecules.length;
+    let moleculeIndex = Math.floor(time / 10000) % molecules.length;
 
-    if (moleculeIndex != prevMoleculeIndex) {
+    if (moleculeIndex !== prevMoleculeIndex) {
       console.log(moleculeIndex);
 
       while (scene.children.length) {
@@ -149,14 +149,25 @@ function visualize(molecules) {
             break;
         }
 
-        const geometry = new THREE.SphereGeometry(1, 32, 16);
-        const material = new THREE.MeshPhongMaterial({ color: color });
-        const sphere = new THREE.Mesh(geometry, material);
-
         let [x, y, z] = atom.pos;
+        const sphereGeometry = new THREE.SphereGeometry(1, 32, 16);
+        const sphereMaterial = new THREE.MeshPhongMaterial({ color: color });
+        const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
         sphere.position.set(x, y, z);
-
         scene.add(sphere);
+
+        if (atom.forces !== undefined) {
+          let [fx, fy, fz] = atom.forces;
+          const lineMaterial = new THREE.LineBasicMaterial({ color: color });
+          const linePoints = [];
+          linePoints.push(new THREE.Vector3(x, y, z));
+          linePoints.push(new THREE.Vector3(x + fx, y + fy, z + fz));
+          const lineGeometry = new THREE.BufferGeometry().setFromPoints(
+            linePoints,
+          );
+          const line = new THREE.Line(lineGeometry, lineMaterial);
+          scene.add(line);
+        }
       }
 
       const ambientLight = new THREE.AmbientLight("white", 1);
