@@ -48,12 +48,20 @@ function onLoad(reader) {
 function toMetadata(line) {
     console.log(line);
 
-    // TODO: Improve regex.
-    let matches = line.match(/[0-9A-Za-z_]+=(?:"[^"]*"|[^" ]*)/g);
+    // Specification:
+    // https://www.ovito.org/docs/current/reference/file_formats/input/xyz.html
+
+    let matches = line.matchAll(/("(?:[^"\\]|\\.)*"|[^ ="[\]{}\\]*)=("(?:[^"\\]|\\.)*"|[^ ="[\]{}\\]*)/g);
 
     let metadata = {}
     for (match of matches) {
-        let [_, key, value] = match.match(/([0-9A-Za-z_]+)=("[^"]*"|[^" ]*)/);
+        let [_, key, value] = match;
+
+        if (value.startsWith('"')) {
+            value = value.slice(1, -1); // Remove double quote delimiters.
+            value = value.replaceAll(/\\(.)/g, "$1");
+        }
+
         metadata[key] = value;
     }
 
