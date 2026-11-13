@@ -123,7 +123,7 @@ function visualize(molecules) {
 
   let prevMoleculeIndex = undefined;
   renderer.setAnimationLoop((time) => {
-    let moleculeIndex = Math.floor(time / 10000) % molecules.length;
+    let moleculeIndex = Math.floor(time / 1000) % molecules.length;
 
     if (moleculeIndex !== prevMoleculeIndex) {
       console.log(moleculeIndex);
@@ -156,8 +156,9 @@ function visualize(molecules) {
         sphere.position.set(x, y, z);
         scene.add(sphere);
 
-        if (atom.forces !== undefined) {
-          let [fx, fy, fz] = atom.forces;
+        const forces = atom.forces || atom.MACE_forces;
+        if (forces !== undefined) {
+          let [fx, fy, fz] = forces;
           const lineMaterial = new THREE.LineBasicMaterial({ color: color });
           const linePoints = [];
           linePoints.push(new THREE.Vector3(x, y, z));
