@@ -1,23 +1,63 @@
 import * as THREE from "three";
 import { TrackballControls } from "three/addons/controls/TrackballControls.js";
 
-function main() {
-  const fileInput = document.getElementById("file-input");
-  fileInput.addEventListener("change", () => {
-    readFile(fileInput);
-  });
+class App {
+  constructor() {
+    this.visualizer = new Visualizer();
+  }
+
+  run() {
+    const fileInput = document.getElementById("file-input");
+    fileInput.addEventListener("change", () => {
+      const file = fileInput.files[0];
+
+      const reader = new FileReader();
+      reader.addEventListener("load", () => {
+        const molecules = onLoad(reader.result);
+        this.visualizer.visualize(molecules);
+      });
+
+      reader.readAsText(file);
+    });
+  }
 }
 
-function readFile(fileInput) {
-  const file = fileInput.files[0];
+class Atom {
+  species; // String or `undefined`
+  pos; // `[x, y, z]` or `undefined`
+  forces; // `[fx, fy, fz]` or `undefined`
 
-  const reader = new FileReader();
-  reader.addEventListener("load", () => {
-    const molecules = onLoad(reader.result);
-    const visualizer = new Visualizer();
-    visualizer.visualize(molecules);
-  });
-  reader.readAsText(file);
+  constructor(line, properties) {
+    const splits = line.split(/\s+/);
+
+    const data = {};
+
+    let splitIndex = 0;
+    for (const property of properties) {
+      const values = [];
+
+      for (let j = 0; j < property.num; j++) {
+        const value = splits[splitIndex++];
+
+        switch (property.type) {
+          case "S":
+            values.push(value);
+            break;
+          case "I":
+          case "R":
+          case "L":
+            values.push(Number(value));
+            break;
+        }
+      }
+
+      data[property.name] = values;
+    }
+
+    this.species = data.species[0];
+    this.pos = data.pos;
+    this.forces = data.forces || data.MACE_forces;
+  }
 }
 
 function onLoad(result) {
@@ -34,28 +74,7 @@ function onLoad(result) {
     let molecule = [];
     for (let i = 0; i < numAtoms; i++) {
       let line = lines[lineIndex++];
-      let splits = line.split(/\s+/);
-
-      let atom = {};
-      let splitIndex = 0;
-      for (let property of properties) {
-        let values = [];
-        for (let j = 0; j < property.num; j++) {
-          let value = splits[splitIndex];
-          switch (property.type) {
-            case "S":
-              values.push(value);
-              break;
-            case "I":
-            case "R":
-            case "L":
-              values.push(Number(value));
-              break;
-          }
-          splitIndex++;
-        }
-        atom[property.name] = values;
-      }
+      const atom = new Atom(line, properties);
       molecule.push(atom);
     }
     molecules.push(molecule);
@@ -171,21 +190,19 @@ class Visualizer {
           // TODO: Cite more properly.
           // TODO: Consider different sources.
 
-          const species = atom.species;
-          if (species === undefined) {
+          if (atom.species === undefined) {
             continue;
           }
           const { radius, color } = {
             H: { radius: 1.1, color: "white" },
             C: { radius: 1.7, color: "gray" },
             O: { radius: 1.52, color: "red" },
-          }[species[0]] || { radius: 1, color: "magenta" };
+          }[atom.species] || { radius: 1, color: "magenta" };
 
-          const pos = atom.pos;
-          if (pos === undefined) {
+          if (atom.pos === undefined) {
             continue;
           }
-          const [x, y, z] = pos;
+          const [x, y, z] = atom.pos;
 
           const centerSphere = new THREE.Mesh(
             new THREE.SphereGeometry(1 / 4, 32, 16),
@@ -212,11 +229,10 @@ class Visualizer {
           atomSphere.position.set(x, y, z);
           atomSpheres.push(atomSphere);
 
-          const forces = atom.forces || atom.MACE_forces;
-          if (forces === undefined) {
+          if (atom.forces === undefined) {
             continue;
           }
-          const [fx, fy, fz] = forces;
+          const [fx, fy, fz] = atom.forces;
 
           const forceVectorLine = new THREE.Line(
             new THREE.BufferGeometry().setFromPoints([
@@ -252,4 +268,5 @@ class Visualizer {
   }
 }
 
-main();
+const app = new App();
+app.run();
