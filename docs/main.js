@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { TrackballControls } from "three/addons/controls/TrackballControls.js";
 
 function main() {
   const fileInput = document.getElementById("file-input");
@@ -120,22 +120,23 @@ class Visualizer {
 
     document.body.appendChild(this.renderer.domElement);
 
-    this.camera = new THREE.PerspectiveCamera(
-      75,
-      window.innerWidth / window.innerHeight,
-      0.1,
-      1000,
-    );
-    this.camera.position.set(0, 0, 1);
+    this.camera = new THREE.PerspectiveCamera();
+    this.camera.aspect = window.innerWidth / window.innerHeight;
+    this.camera.position.set(0, 0, 100);
 
-    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+    this.controls = new TrackballControls(
+      this.camera,
+      this.renderer.domElement,
+    );
     this.controls.update();
 
     this.molecules = undefined;
     this.prevMoleculeIndex = undefined;
     this.removableObjects = [];
 
-    this.renderer.setAnimationLoop(this.render);
+    this.renderer.setAnimationLoop((time) => {
+      this.render(time);
+    });
   }
 
   visualize(molecules) {
