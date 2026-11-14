@@ -142,87 +142,68 @@ function visualize(molecules) {
       const ghostAtomSpheres = [];
       const atomSpheres = [];
 
-      for (let atom of molecules[moleculeIndex]) {
+      for (const atom of molecules[moleculeIndex]) {
         // Van der Waars radii are according to [A. Bondi, 1964].
         // A. Bondi: van der Waals Volumes and Radii.
         // doi 10.1021/j100785a001
         // TODO: Cite more properly.
         // TODO: Consider different sources.
 
-        let radius;
-        let color;
-        switch (atom.species[0]) {
-          case "H":
-            radius = 1.1;
-            color = "white";
-            break;
-          case "C":
-            radius = 1.7;
-            color = "gray";
-            break;
-          case "O":
-            radius = 1.52;
-            color = "red";
-            break;
-          default:
-            color = "magenta";
-            break;
+        const species = atom.species;
+        if (species === undefined) {
+          continue;
         }
+        const { radius, color } = {
+          H: { radius: 1.1, color: "white" },
+          C: { radius: 1.7, color: "gray" },
+          O: { radius: 1.52, color: "red" },
+        }[species[0]] || { radius: 1, color: "magenta" };
 
-        {
-          let [x, y, z] = atom.pos;
-          const sphereGeometry = new THREE.SphereGeometry(1 / 16, 32, 16);
-          const sphereMaterial = new THREE.MeshPhongMaterial({
-            color: "lime",
-          });
-          const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
-          sphere.position.set(x, y, z);
-          centerSpheres.push(sphere);
+        const pos = atom.pos;
+        if (pos === undefined) {
+          continue;
         }
+        const [x, y, z] = pos;
 
-        {
-          let [x, y, z] = atom.pos;
+        const centerSphere = new THREE.Mesh(
+          new THREE.SphereGeometry(1 / 4, 32, 16),
+          new THREE.MeshPhongMaterial({ color: "lime" }),
+        );
+        centerSphere.position.set(x, y, z);
+        centerSpheres.push(centerSphere);
 
-          const forces = atom.forces || atom.MACE_forces;
-          if (forces !== undefined) {
-            let [fx, fy, fz] = forces;
-            const lineMaterial = new THREE.LineBasicMaterial({
-              color: "magenta",
-            });
-            const linePoints = [];
-            linePoints.push(new THREE.Vector3(x, y, z));
-            linePoints.push(new THREE.Vector3(x + fx, y + fy, z + fz));
-            const lineGeometry = new THREE.BufferGeometry().setFromPoints(
-              linePoints,
-            );
-            const line = new THREE.Line(lineGeometry, lineMaterial);
-            forceVectorLines.push(line);
-          }
-        }
+        const ghostAtomSphere = new THREE.Mesh(
+          new THREE.SphereGeometry(radius, 32, 16),
+          new THREE.MeshPhongMaterial({ colorWrite: false }),
+        );
+        ghostAtomSphere.position.set(x, y, z);
+        ghostAtomSpheres.push(ghostAtomSphere);
 
-        {
-          let [x, y, z] = atom.pos;
-          const sphereGeometry = new THREE.SphereGeometry(radius, 32, 16);
-          const sphereMaterial = new THREE.MeshPhongMaterial({
-            colorWrite: false,
-          });
-          const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
-          sphere.position.set(x, y, z);
-          ghostAtomSpheres.push(sphere);
-        }
-
-        {
-          let [x, y, z] = atom.pos;
-          const sphereGeometry = new THREE.SphereGeometry(radius, 32, 16);
-          const sphereMaterial = new THREE.MeshPhongMaterial({
+        const atomSphere = new THREE.Mesh(
+          new THREE.SphereGeometry(radius, 32, 16),
+          new THREE.MeshPhongMaterial({
             color: color,
             transparent: true,
             opacity: 0.5,
-          });
-          const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
-          sphere.position.set(x, y, z);
-          atomSpheres.push(sphere);
+          }),
+        );
+        atomSphere.position.set(x, y, z);
+        atomSpheres.push(atomSphere);
+
+        const forces = atom.forces || atom.MACE_forces;
+        if (forces === undefined) {
+          continue;
         }
+        const [fx, fy, fz] = forces;
+
+        const forceVectorLine = new THREE.Line(
+          new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(x, y, z),
+            new THREE.Vector3(x + fx, y + fy, z + fz),
+          ]),
+          new THREE.LineBasicMaterial({ color: "magenta" }),
+        );
+        forceVectorLines.push(forceVectorLine);
       }
 
       for (const centerSphere of centerSpheres) {
