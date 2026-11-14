@@ -137,16 +137,58 @@ function visualize(molecules) {
         scene.remove(scene.children[0]);
       }
 
+      // Van der Waars radii are according to [A. Bondi, 1964].
+      // A. Bondi: van der Waals Volumes and Radii.
+      // doi 10.1021/j100785a001
+      // TODO: Cite more properly.
+      // TODO: Consider different sources.
+
       for (let atom of molecules[moleculeIndex]) {
+        let radius;
         let color;
         switch (atom.species[0]) {
           case "H":
+            radius = 1.1;
             color = "white";
             break;
           case "C":
+            radius = 1.7;
             color = "gray";
             break;
           case "O":
+            radius = 1.52;
+            color = "red";
+            break;
+          default:
+            color = "magenta";
+            break;
+        }
+
+        let [x, y, z] = atom.pos;
+        const sphereGeometry = new THREE.SphereGeometry(1 / 16, 32, 16);
+        const sphereMaterial = new THREE.MeshPhongMaterial({
+          color: color,
+        });
+        const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+        sphere.position.set(x, y, z);
+        sphere.renderOrder = 3;
+        scene.add(sphere);
+      }
+
+      for (let atom of molecules[moleculeIndex]) {
+        let radius;
+        let color;
+        switch (atom.species[0]) {
+          case "H":
+            radius = 1.1;
+            color = "white";
+            break;
+          case "C":
+            radius = 1.7;
+            color = "gray";
+            break;
+          case "O":
+            radius = 1.52;
             color = "red";
             break;
           default:
@@ -167,31 +209,25 @@ function visualize(molecules) {
             linePoints,
           );
           const line = new THREE.Line(lineGeometry, lineMaterial);
+          line.renderOrder = 1;
           scene.add(line);
         }
       }
 
       for (let atom of molecules[moleculeIndex]) {
-        let [x, y, z] = atom.pos;
-        const sphereGeometry = new THREE.SphereGeometry(1, 32, 16);
-        const sphereMaterial = new THREE.MeshPhongMaterial({
-          colorWrite: false,
-        });
-        const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
-        sphere.position.set(x, y, z);
-        scene.add(sphere);
-      }
-
-      for (let atom of molecules[moleculeIndex]) {
+        let radius;
         let color;
         switch (atom.species[0]) {
           case "H":
+            radius = 1.1;
             color = "white";
             break;
           case "C":
+            radius = 1.7;
             color = "gray";
             break;
           case "O":
+            radius = 1.52;
             color = "red";
             break;
           default:
@@ -200,7 +236,39 @@ function visualize(molecules) {
         }
 
         let [x, y, z] = atom.pos;
-        const sphereGeometry = new THREE.SphereGeometry(1, 32, 16);
+        const sphereGeometry = new THREE.SphereGeometry(radius, 32, 16);
+        const sphereMaterial = new THREE.MeshPhongMaterial({
+          colorWrite: false,
+        });
+        const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+        sphere.position.set(x, y, z);
+        sphere.renderOrder = 2;
+        scene.add(sphere);
+      }
+
+      for (let atom of molecules[moleculeIndex]) {
+        let radius;
+        let color;
+        switch (atom.species[0]) {
+          case "H":
+            radius = 1.1;
+            color = "white";
+            break;
+          case "C":
+            radius = 1.7;
+            color = "gray";
+            break;
+          case "O":
+            radius = 1.52;
+            color = "red";
+            break;
+          default:
+            color = "magenta";
+            break;
+        }
+
+        let [x, y, z] = atom.pos;
+        const sphereGeometry = new THREE.SphereGeometry(radius, 32, 16);
         const sphereMaterial = new THREE.MeshPhongMaterial({
           color: color,
           transparent: true,
@@ -208,6 +276,7 @@ function visualize(molecules) {
         });
         const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
         sphere.position.set(x, y, z);
+        sphere.renderOrder = 3;
         scene.add(sphere);
       }
 
