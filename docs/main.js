@@ -13,13 +13,15 @@ function readFile(fileInput) {
 
   const reader = new FileReader();
   reader.addEventListener("load", () => {
-    onLoad(reader);
+    const molecules = onLoad(reader.result);
+    const visualizer = new Visualizer();
+    visualizer.visualize(molecules);
   });
   reader.readAsText(file);
 }
 
-function onLoad(reader) {
-  let lines = reader.result.split("\n");
+function onLoad(result) {
+  let lines = result.split("\n");
   lines.pop(); // Remove the blank line at the end.
 
   let molecules = [];
@@ -60,8 +62,7 @@ function onLoad(reader) {
   }
   console.log(molecules);
 
-  const visualizer = new Visualizer();
-  visualizer.visualize(molecules);
+  return molecules;
 }
 
 function toMetadata(line) {
