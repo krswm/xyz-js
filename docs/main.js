@@ -115,6 +115,10 @@ function visualize(molecules) {
 
   const renderer = new THREE.WebGLRenderer();
   renderer.setSize(window.innerWidth, window.innerHeight);
+
+  renderer.sortObjects = false; // This line!!!
+  // Success!!! Now I don't see transparent sphere intersection artiacts!!!
+
   document.body.appendChild(renderer.domElement);
 
   const controls = new OrbitControls(camera, renderer.domElement);
@@ -140,7 +144,7 @@ function visualize(molecules) {
             color = "white";
             break;
           case "C":
-            color = "black";
+            color = "gray";
             break;
           case "O":
             color = "red";
@@ -151,15 +155,6 @@ function visualize(molecules) {
         }
 
         let [x, y, z] = atom.pos;
-        const sphereGeometry = new THREE.SphereGeometry(1, 32, 16);
-        const sphereMaterial = new THREE.MeshPhongMaterial({
-          color: color,
-          transparent: true,
-          opacity: 0.25,
-        });
-        const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
-        sphere.position.set(x, y, z);
-        scene.add(sphere);
 
         const forces = atom.forces || atom.MACE_forces;
         if (forces !== undefined) {
@@ -174,6 +169,46 @@ function visualize(molecules) {
           const line = new THREE.Line(lineGeometry, lineMaterial);
           scene.add(line);
         }
+      }
+
+      for (let atom of molecules[moleculeIndex]) {
+        let [x, y, z] = atom.pos;
+        const sphereGeometry = new THREE.SphereGeometry(1, 32, 16);
+        const sphereMaterial = new THREE.MeshPhongMaterial({
+          colorWrite: false,
+        });
+        const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+        sphere.position.set(x, y, z);
+        scene.add(sphere);
+      }
+
+      for (let atom of molecules[moleculeIndex]) {
+        let color;
+        switch (atom.species[0]) {
+          case "H":
+            color = "white";
+            break;
+          case "C":
+            color = "gray";
+            break;
+          case "O":
+            color = "red";
+            break;
+          default:
+            color = "magenta";
+            break;
+        }
+
+        let [x, y, z] = atom.pos;
+        const sphereGeometry = new THREE.SphereGeometry(1, 32, 16);
+        const sphereMaterial = new THREE.MeshPhongMaterial({
+          color: color,
+          transparent: true,
+          opacity: 0.5,
+        });
+        const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+        sphere.position.set(x, y, z);
+        scene.add(sphere);
       }
 
       const ambientLight = new THREE.AmbientLight("white", 1);
