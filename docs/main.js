@@ -126,6 +126,7 @@ function visualize(molecules) {
     let moleculeIndex = Math.floor(time / 1000) % molecules.length;
 
     if (moleculeIndex !== prevMoleculeIndex) {
+      prevMoleculeIndex = moleculeIndex;
       console.log(moleculeIndex);
 
       while (scene.children.length) {
@@ -139,7 +140,7 @@ function visualize(molecules) {
             color = "white";
             break;
           case "C":
-            color = "gray";
+            color = "black";
             break;
           case "O":
             color = "red";
@@ -151,7 +152,11 @@ function visualize(molecules) {
 
         let [x, y, z] = atom.pos;
         const sphereGeometry = new THREE.SphereGeometry(1, 32, 16);
-        const sphereMaterial = new THREE.MeshPhongMaterial({ color: color });
+        const sphereMaterial = new THREE.MeshPhongMaterial({
+          color: color,
+          transparent: true,
+          opacity: 0.25,
+        });
         const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
         sphere.position.set(x, y, z);
         scene.add(sphere);
