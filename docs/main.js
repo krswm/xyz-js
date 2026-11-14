@@ -60,7 +60,8 @@ function onLoad(reader) {
   }
   console.log(molecules);
 
-  visualize(molecules);
+  const visualizer = new Visualizer();
+  visualizer.visualize(molecules);
 }
 
 function toMetadata(line) {
@@ -103,132 +104,150 @@ function toProperties(metadata) {
   return properties;
 }
 
-function visualize(molecules) {
-  const scene = new THREE.Scene();
+class Visualizer {
+  constructor() {
+    this.scene = new THREE.Scene();
 
-  const camera = new THREE.PerspectiveCamera(
-    75,
-    window.innerWidth / window.innerHeight,
-    0.1,
-    1000,
-  );
+    const ambientLight = new THREE.AmbientLight("white", 1);
+    this.scene.add(ambientLight);
 
-  const renderer = new THREE.WebGLRenderer();
-  renderer.setSize(window.innerWidth, window.innerHeight);
+    const directionalLight = new THREE.DirectionalLight("white", 2);
+    this.scene.add(directionalLight);
 
-  renderer.sortObjects = false; // This line!!!
-  // Success!!! Now I don't see transparent sphere intersection artiacts!!!
+    this.renderer = new THREE.WebGLRenderer();
+    this.renderer.setSize(window.innerWidth, window.innerHeight);
+    this.renderer.sortObjects = false;
 
-  document.body.appendChild(renderer.domElement);
+    document.body.appendChild(this.renderer.domElement);
 
-  const controls = new OrbitControls(camera, renderer.domElement);
-  camera.position.set(0, 0, 1);
-  controls.update();
+    this.camera = new THREE.PerspectiveCamera(
+      75,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      1000,
+    );
+    this.camera.position.set(0, 0, 1);
 
-  let prevMoleculeIndex = undefined;
-  renderer.setAnimationLoop((time) => {
-    let moleculeIndex = Math.floor(time / 1000) % molecules.length;
+    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+    this.controls.update();
 
-    if (moleculeIndex !== prevMoleculeIndex) {
-      prevMoleculeIndex = moleculeIndex;
-      console.log(moleculeIndex);
+    this.molecules = undefined;
+    this.prevMoleculeIndex = undefined;
+    this.removableObjects = [];
 
-      while (scene.children.length) {
-        scene.remove(scene.children[0]);
-      }
+    this.renderer.setAnimationLoop(this.render);
+  }
 
-      const centerSpheres = [];
-      const forceVectorLines = [];
-      const ghostAtomSpheres = [];
-      const atomSpheres = [];
+  visualize(molecules) {
+    this.molecules = molecules;
+    this.prevMoleculeIndex = undefined;
+  }
 
-      for (const atom of molecules[moleculeIndex]) {
-        // Van der Waars radii are according to [A. Bondi, 1964].
-        // A. Bondi: van der Waals Volumes and Radii.
-        // doi 10.1021/j100785a001
-        // TODO: Cite more properly.
-        // TODO: Consider different sources.
+  render(time) {
+    if (this.molecules !== undefined) {
+      let moleculeIndex = Math.floor(time / 1000) % this.molecules.length;
 
-        const species = atom.species;
-        if (species === undefined) {
-          continue;
+      if (moleculeIndex !== this.prevMoleculeIndex) {
+        this.prevMoleculeIndex = moleculeIndex;
+        console.log(
+          `render molecule frame ${moleculeIndex}/${this.molecules.length}`,
+        );
+
+        for (const removableObject of this.removableObjects) {
+          this.scene.remove(removableObject);
         }
-        const { radius, color } = {
-          H: { radius: 1.1, color: "white" },
-          C: { radius: 1.7, color: "gray" },
-          O: { radius: 1.52, color: "red" },
-        }[species[0]] || { radius: 1, color: "magenta" };
 
-        const pos = atom.pos;
-        if (pos === undefined) {
-          continue;
+        const centerSpheres = [];
+        const forceVectorLines = [];
+        const ghostAtomSpheres = [];
+        const atomSpheres = [];
+
+        for (const atom of this.molecules[moleculeIndex]) {
+          // Van der Waars radii are according to [A. Bondi, 1964].
+          // A. Bondi: van der Waals Volumes and Radii.
+          // doi 10.1021/j100785a001
+          // TODO: Cite more properly.
+          // TODO: Consider different sources.
+
+          const species = atom.species;
+          if (species === undefined) {
+            continue;
+          }
+          const { radius, color } = {
+            H: { radius: 1.1, color: "white" },
+            C: { radius: 1.7, color: "gray" },
+            O: { radius: 1.52, color: "red" },
+          }[species[0]] || { radius: 1, color: "magenta" };
+
+          const pos = atom.pos;
+          if (pos === undefined) {
+            continue;
+          }
+          const [x, y, z] = pos;
+
+          const centerSphere = new THREE.Mesh(
+            new THREE.SphereGeometry(1 / 4, 32, 16),
+            new THREE.MeshPhongMaterial({ color: "cyan" }),
+          );
+          centerSphere.position.set(x, y, z);
+          centerSpheres.push(centerSphere);
+
+          const ghostAtomSphere = new THREE.Mesh(
+            new THREE.SphereGeometry(radius, 32, 16),
+            new THREE.MeshPhongMaterial({ colorWrite: false }),
+          );
+          ghostAtomSphere.position.set(x, y, z);
+          ghostAtomSpheres.push(ghostAtomSphere);
+
+          const atomSphere = new THREE.Mesh(
+            new THREE.SphereGeometry(radius, 32, 16),
+            new THREE.MeshPhongMaterial({
+              color: color,
+              transparent: true,
+              opacity: 0.5,
+            }),
+          );
+          atomSphere.position.set(x, y, z);
+          atomSpheres.push(atomSphere);
+
+          const forces = atom.forces || atom.MACE_forces;
+          if (forces === undefined) {
+            continue;
+          }
+          const [fx, fy, fz] = forces;
+
+          const forceVectorLine = new THREE.Line(
+            new THREE.BufferGeometry().setFromPoints([
+              new THREE.Vector3(x, y, z),
+              new THREE.Vector3(x + fx, y + fy, z + fz),
+            ]),
+            new THREE.LineBasicMaterial({ color: "magenta" }),
+          );
+          forceVectorLines.push(forceVectorLine);
         }
-        const [x, y, z] = pos;
 
-        const centerSphere = new THREE.Mesh(
-          new THREE.SphereGeometry(1 / 4, 32, 16),
-          new THREE.MeshPhongMaterial({ color: "lime" }),
-        );
-        centerSphere.position.set(x, y, z);
-        centerSpheres.push(centerSphere);
-
-        const ghostAtomSphere = new THREE.Mesh(
-          new THREE.SphereGeometry(radius, 32, 16),
-          new THREE.MeshPhongMaterial({ colorWrite: false }),
-        );
-        ghostAtomSphere.position.set(x, y, z);
-        ghostAtomSpheres.push(ghostAtomSphere);
-
-        const atomSphere = new THREE.Mesh(
-          new THREE.SphereGeometry(radius, 32, 16),
-          new THREE.MeshPhongMaterial({
-            color: color,
-            transparent: true,
-            opacity: 0.5,
-          }),
-        );
-        atomSphere.position.set(x, y, z);
-        atomSpheres.push(atomSphere);
-
-        const forces = atom.forces || atom.MACE_forces;
-        if (forces === undefined) {
-          continue;
+        for (const centerSphere of centerSpheres) {
+          this.scene.add(centerSphere);
+          this.removableObjects.push(centerSphere);
         }
-        const [fx, fy, fz] = forces;
-
-        const forceVectorLine = new THREE.Line(
-          new THREE.BufferGeometry().setFromPoints([
-            new THREE.Vector3(x, y, z),
-            new THREE.Vector3(x + fx, y + fy, z + fz),
-          ]),
-          new THREE.LineBasicMaterial({ color: "magenta" }),
-        );
-        forceVectorLines.push(forceVectorLine);
+        for (const forceVectorLine of forceVectorLines) {
+          this.scene.add(forceVectorLine);
+          this.removableObjects.push(forceVectorLine);
+        }
+        for (const ghostAtomSphere of ghostAtomSpheres) {
+          this.scene.add(ghostAtomSphere);
+          this.removableObjects.push(ghostAtomSphere);
+        }
+        for (const atomSphere of atomSpheres) {
+          this.scene.add(atomSphere);
+          this.removableObjects.push(atomSphere);
+        }
       }
-
-      for (const centerSphere of centerSpheres) {
-        scene.add(centerSphere);
-      }
-      for (const forceVectorLine of forceVectorLines) {
-        scene.add(forceVectorLine);
-      }
-      for (const ghostAtomSphere of ghostAtomSpheres) {
-        scene.add(ghostAtomSphere);
-      }
-      for (const atomSphere of atomSpheres) {
-        scene.add(atomSphere);
-      }
-
-      const ambientLight = new THREE.AmbientLight("white", 1);
-      scene.add(ambientLight);
-
-      const directionalLight = new THREE.DirectionalLight("white", 2);
-      scene.add(directionalLight);
     }
 
-    controls.update();
-    renderer.render(scene, camera);
-  });
+    this.controls.update();
+    this.renderer.render(this.scene, this.camera);
+  }
 }
 
 main();
