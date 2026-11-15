@@ -27,8 +27,9 @@ class App {
 }
 
 class Molecule {
-  constructor(atoms) {
+  constructor(atoms, energy) {
     this.atoms = atoms;
+    this.energy = energy; // Number or `undefined`
   }
 }
 
@@ -82,7 +83,9 @@ class XyzReader {
       }
     }
 
-    return new Molecule(atoms);
+    const energy = Number(metadata.energy) || undefined;
+
+    return new Molecule(atoms, energy);
   }
 
   toMetadata(line) {
@@ -243,6 +246,10 @@ class Visualizer {
       `render molecule frame ${moleculeIndex}/${this.molecules.length}`,
     );
 
+    const molecule = this.molecules[moleculeIndex];
+
+    document.getElementById("energy").innerText = molecule.energy;
+
     for (const removableObject of this.removableObjects) {
       this.scene.remove(removableObject);
     }
@@ -252,7 +259,7 @@ class Visualizer {
     const ghostAtomSpheres = [];
     const atomSpheres = [];
 
-    for (const atom of this.molecules[moleculeIndex].atoms) {
+    for (const atom of molecule.atoms) {
       // Van der Waars radii are according to [A. Bondi, 1964].
       // A. Bondi: van der Waals Volumes and Radii.
       // doi 10.1021/j100785a001
