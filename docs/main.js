@@ -9,25 +9,124 @@ class App {
   run() {
     const fileInput = document.getElementById("file-input");
     fileInput.addEventListener("change", () => {
-      const file = fileInput.files[0];
-
       const reader = new FileReader();
       reader.addEventListener("load", () => {
-        const molecules = onLoad(reader.result);
-        this.visualizer.visualize(molecules);
+        const xyzReader = new XyzReader(reader.result);
+        this.visualizer.changeMolecules(xyzReader.getMolecules());
       });
 
+      const file = fileInput.files[0];
       reader.readAsText(file);
     });
   }
 }
 
-class Atom {
-  species; // String or `undefined`
-  pos; // `[x, y, z]` or `undefined`
-  forces; // `[fx, fy, fz]` or `undefined`
+class Molecule {
+  constructor(atoms) {
+    this.atoms = atoms;
+  }
+}
 
-  constructor(line, properties) {
+class Atom {
+  constructor(species, pos, forces) {
+    this.species = species; // String or `undefined`
+    this.pos = pos; // `[x, y, z]` or `undefined`
+    this.forces = forces; // `[fx, fy, fz]` or `undefined`
+  }
+}
+
+class XyzReader {
+  // I referred to this specification of the XYZ and Extended XYZ format:
+  // https://www.ovito.org/docs/current/reference/file_formats/input/xyz.html
+
+  constructor(xyzFileContent) {
+    console.log("%c%s", "font-family: monospace;", xyzFileContent);
+
+    this.lines = xyzFileContent.split("\n");
+    this.lines.pop(); // Remove the blank line at the end.
+
+    this.lineIndex = 0;
+  }
+
+  getMolecules() {
+    const molecules = [];
+
+    while (this.lineIndex < this.lines.length) {
+      molecules.push(this.getNextMolecule());
+    }
+
+    console.log(molecules);
+    return molecules;
+  }
+
+  getNextMolecule() {
+    const numAtoms = Number(this.lines[this.lineIndex++]);
+    const metadata = this.toMetadata(this.lines[this.lineIndex++]);
+    const properties = this.toProperties(metadata);
+    const isExtendedXyz = properties !== undefined;
+
+    const atoms = [];
+
+    for (let i = 0; i < numAtoms; i++) {
+      const line = this.lines[this.lineIndex++];
+
+      if (isExtendedXyz) {
+        atoms.push(this.toAtomExtendedXyz(line, properties));
+      } else {
+        atoms.push(this.toAtomXyz(line));
+      }
+    }
+
+    return new Molecule(atoms);
+  }
+
+  toMetadata(line) {
+    const matches = line.matchAll(
+      /("(?:[^"\\]|\\.)*"|[^ ="[\]{}\\]*)=("(?:[^"\\]|\\.)*"|[^ ="[\]{}\\]*)/g,
+    );
+
+    const metadata = {};
+
+    for (const match of matches) {
+      const key = match[1];
+      let value = match[2];
+
+      if (value.startsWith('"')) {
+        value = value.slice(1, -1); // Remove the double quote delimiters.
+        value = value.replaceAll(/\\(.)/g, "$1"); // De-escape characters.
+      }
+
+      metadata[key] = value;
+    }
+
+    return metadata;
+  }
+
+  toProperties(metadata) {
+    const text = metadata["Properties"];
+    if (text === undefined) {
+      return undefined;
+    }
+
+    const splits = text.split(":");
+
+    const properties = [];
+
+    let i = 0;
+    while (i < splits.length) {
+      const property = {
+        name: splits[i++],
+        type: splits[i++],
+        num: Number(splits[i++]),
+      };
+
+      properties.push(property);
+    }
+
+    return properties;
+  }
+
+  toAtomExtendedXyz(line, properties) {
     const splits = line.split(/\s+/);
 
     const data = {};
@@ -36,7 +135,7 @@ class Atom {
     for (const property of properties) {
       const values = [];
 
-      for (let j = 0; j < property.num; j++) {
+      for (let i = 0; i < property.num; i++) {
         const value = splits[splitIndex++];
 
         switch (property.type) {
@@ -54,74 +153,20 @@ class Atom {
       data[property.name] = values;
     }
 
-    this.species = data.species[0];
-    this.pos = data.pos;
-    this.forces = data.forces || data.MACE_forces;
-  }
-}
+    const species = data.species[0];
+    const pos = data.pos;
+    const forces = data.forces || data.MACE_forces;
 
-function onLoad(result) {
-  let lines = result.split("\n");
-  lines.pop(); // Remove the blank line at the end.
-
-  let molecules = [];
-  let lineIndex = 0;
-  while (lineIndex < lines.length) {
-    let numAtoms = Number(lines[lineIndex++]);
-    let metadata = toMetadata(lines[lineIndex++]);
-    let properties = toProperties(metadata);
-
-    let molecule = [];
-    for (let i = 0; i < numAtoms; i++) {
-      let line = lines[lineIndex++];
-      const atom = new Atom(line, properties);
-      molecule.push(atom);
-    }
-    molecules.push(molecule);
-  }
-  console.log(molecules);
-
-  return molecules;
-}
-
-function toMetadata(line) {
-  // Specification:
-  // https://www.ovito.org/docs/current/reference/file_formats/input/xyz.html
-
-  let matches = line.matchAll(
-    /("(?:[^"\\]|\\.)*"|[^ ="[\]{}\\]*)=("(?:[^"\\]|\\.)*"|[^ ="[\]{}\\]*)/g,
-  );
-
-  let metadata = {};
-  for (let match of matches) {
-    let [, key, value] = match;
-
-    if (value.startsWith('"')) {
-      value = value.slice(1, -1); // Remove the double quote delimiters.
-      value = value.replaceAll(/\\(.)/g, "$1"); // De-escape characters.
-    }
-
-    metadata[key] = value;
+    return new Atom(species, pos, forces);
   }
 
-  return metadata;
-}
+  toAtomXyz(line) {
+    const [species, x, y, z] = line.split(/\s+/);
+    const pos = [x, y, z];
+    const forces = undefined;
 
-function toProperties(metadata) {
-  let text = metadata["Properties"];
-  let splits = text.split(":");
-
-  let properties = [];
-  for (let i = 0; i < splits.length; i += 3) {
-    let property = {
-      name: splits[i],
-      type: splits[i + 1],
-      num: Number(splits[i + 2]),
-    };
-    properties.push(property);
+    return new Atom(species, pos);
   }
-
-  return properties;
 }
 
 class Visualizer {
@@ -159,7 +204,7 @@ class Visualizer {
     });
   }
 
-  visualize(molecules) {
+  changeMolecules(molecules) {
     this.molecules = molecules;
     this.prevMoleculeIndex = undefined;
   }
@@ -183,7 +228,7 @@ class Visualizer {
         const ghostAtomSpheres = [];
         const atomSpheres = [];
 
-        for (const atom of this.molecules[moleculeIndex]) {
+        for (const atom of this.molecules[moleculeIndex].atoms) {
           // Van der Waars radii are according to [A. Bondi, 1964].
           // A. Bondi: van der Waals Volumes and Radii.
           // doi 10.1021/j100785a001
