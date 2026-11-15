@@ -1,3 +1,5 @@
+// TODO: Empty file
+
 import * as THREE from "three";
 import { TrackballControls } from "three/addons/controls/TrackballControls.js";
 
@@ -171,6 +173,8 @@ class XyzReader {
 
 class Visualizer {
   constructor() {
+    this.canvas = document.getElementById("canvas");
+
     this.scene = new THREE.Scene();
 
     const ambientLight = new THREE.AmbientLight("white", 1);
@@ -179,17 +183,15 @@ class Visualizer {
     const directionalLight = new THREE.DirectionalLight("white", 2);
     this.scene.add(directionalLight);
 
-    const canvas = document.getElementById("canvas");
-
-    this.renderer = new THREE.WebGLRenderer({ canvas });
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
+    this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas });
+    this.renderer.setSize(window.innerWidth, window.innerHeight, false);
     this.renderer.sortObjects = false;
 
     this.camera = new THREE.PerspectiveCamera();
-    this.camera.aspect = window.innerWidth / window.innerHeight;
+    this.camera.aspect = this.canvas.clientWidth / this.canvas.clientHeight;
     this.camera.position.set(0, 0, 100);
 
-    this.controls = new TrackballControls(this.camera, canvas);
+    this.controls = new TrackballControls(this.camera, this.canvas);
     this.controls.update();
 
     this.molecules = undefined;
@@ -207,106 +209,123 @@ class Visualizer {
   }
 
   render(time) {
-    if (this.molecules !== undefined) {
+    const width = Math.floor(window.innerWidth * window.devicePixelRatio);
+    const height = Math.floor(window.innerHeight * window.devicePixelRatio);
+    const needResize =
+      this.canvas.width !== width || this.canvas.height !== height;
+    if (needResize) {
+      this.renderer.setSize(width, height, false);
+    }
+
+    if (needResize) {
+      this.camera.aspect = window.innerWidth / window.innerHeight;
+      this.camera.updateProjectionMatrix();
+    }
+
+    if (this.molecules !== undefined && this.molecules.length >= 1) {
       let moleculeIndex = Math.floor(time / 1000) % this.molecules.length;
 
       if (moleculeIndex !== this.prevMoleculeIndex) {
         this.prevMoleculeIndex = moleculeIndex;
-        console.log(
-          `render molecule frame ${moleculeIndex}/${this.molecules.length}`,
-        );
-
-        for (const removableObject of this.removableObjects) {
-          this.scene.remove(removableObject);
-        }
-
-        const centerSpheres = [];
-        const forceVectorLines = [];
-        const ghostAtomSpheres = [];
-        const atomSpheres = [];
-
-        for (const atom of this.molecules[moleculeIndex].atoms) {
-          // Van der Waars radii are according to [A. Bondi, 1964].
-          // A. Bondi: van der Waals Volumes and Radii.
-          // doi 10.1021/j100785a001
-          // TODO: Cite more properly.
-          // TODO: Consider different sources.
-
-          if (atom.species === undefined) {
-            continue;
-          }
-          const { radius, color } = {
-            H: { radius: 1.1, color: "white" },
-            C: { radius: 1.7, color: "gray" },
-            O: { radius: 1.52, color: "red" },
-          }[atom.species] || { radius: 1, color: "magenta" };
-
-          if (atom.pos === undefined) {
-            continue;
-          }
-          const [x, y, z] = atom.pos;
-
-          const centerSphere = new THREE.Mesh(
-            new THREE.SphereGeometry(1 / 4, 32, 16),
-            new THREE.MeshPhongMaterial({ color: "cyan" }),
-          );
-          centerSphere.position.set(x, y, z);
-          centerSpheres.push(centerSphere);
-
-          const ghostAtomSphere = new THREE.Mesh(
-            new THREE.SphereGeometry(radius, 32, 16),
-            new THREE.MeshPhongMaterial({ colorWrite: false }),
-          );
-          ghostAtomSphere.position.set(x, y, z);
-          ghostAtomSpheres.push(ghostAtomSphere);
-
-          const atomSphere = new THREE.Mesh(
-            new THREE.SphereGeometry(radius, 32, 16),
-            new THREE.MeshPhongMaterial({
-              color: color,
-              transparent: true,
-              opacity: 0.5,
-            }),
-          );
-          atomSphere.position.set(x, y, z);
-          atomSpheres.push(atomSphere);
-
-          if (atom.forces === undefined) {
-            continue;
-          }
-          const [fx, fy, fz] = atom.forces;
-
-          const forceVectorLine = new THREE.Line(
-            new THREE.BufferGeometry().setFromPoints([
-              new THREE.Vector3(x, y, z),
-              new THREE.Vector3(x + fx, y + fy, z + fz),
-            ]),
-            new THREE.LineBasicMaterial({ color: "magenta" }),
-          );
-          forceVectorLines.push(forceVectorLine);
-        }
-
-        for (const centerSphere of centerSpheres) {
-          this.scene.add(centerSphere);
-          this.removableObjects.push(centerSphere);
-        }
-        for (const forceVectorLine of forceVectorLines) {
-          this.scene.add(forceVectorLine);
-          this.removableObjects.push(forceVectorLine);
-        }
-        for (const ghostAtomSphere of ghostAtomSpheres) {
-          this.scene.add(ghostAtomSphere);
-          this.removableObjects.push(ghostAtomSphere);
-        }
-        for (const atomSphere of atomSpheres) {
-          this.scene.add(atomSphere);
-          this.removableObjects.push(atomSphere);
-        }
+        this.renderRemovableObjects(moleculeIndex);
       }
     }
 
     this.controls.update();
     this.renderer.render(this.scene, this.camera);
+  }
+
+  renderRemovableObjects(moleculeIndex) {
+    console.log(
+      `render molecule frame ${moleculeIndex}/${this.molecules.length}`,
+    );
+
+    for (const removableObject of this.removableObjects) {
+      this.scene.remove(removableObject);
+    }
+
+    const centerSpheres = [];
+    const forceVectorLines = [];
+    const ghostAtomSpheres = [];
+    const atomSpheres = [];
+
+    for (const atom of this.molecules[moleculeIndex].atoms) {
+      // Van der Waars radii are according to [A. Bondi, 1964].
+      // A. Bondi: van der Waals Volumes and Radii.
+      // doi 10.1021/j100785a001
+      // TODO: Cite more properly.
+      // TODO: Consider different sources.
+
+      if (atom.species === undefined) {
+        continue;
+      }
+      const { radius, color } = {
+        H: { radius: 1.1, color: "white" },
+        C: { radius: 1.7, color: "gray" },
+        O: { radius: 1.52, color: "red" },
+      }[atom.species] || { radius: 1, color: "magenta" };
+
+      if (atom.pos === undefined) {
+        continue;
+      }
+      const [x, y, z] = atom.pos;
+
+      const centerSphere = new THREE.Mesh(
+        new THREE.SphereGeometry(1 / 4, 32, 16),
+        new THREE.MeshPhongMaterial({ color: "cyan" }),
+      );
+      centerSphere.position.set(x, y, z);
+      centerSpheres.push(centerSphere);
+
+      const ghostAtomSphere = new THREE.Mesh(
+        new THREE.SphereGeometry(radius, 32, 16),
+        new THREE.MeshPhongMaterial({ colorWrite: false }),
+      );
+      ghostAtomSphere.position.set(x, y, z);
+      ghostAtomSpheres.push(ghostAtomSphere);
+
+      const atomSphere = new THREE.Mesh(
+        new THREE.SphereGeometry(radius, 32, 16),
+        new THREE.MeshPhongMaterial({
+          color: color,
+          transparent: true,
+          opacity: 0.5,
+        }),
+      );
+      atomSphere.position.set(x, y, z);
+      atomSpheres.push(atomSphere);
+
+      if (atom.forces === undefined) {
+        continue;
+      }
+      const [fx, fy, fz] = atom.forces;
+
+      const forceVectorLine = new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(x, y, z),
+          new THREE.Vector3(x + fx, y + fy, z + fz),
+        ]),
+        new THREE.LineBasicMaterial({ color: "magenta" }),
+      );
+      forceVectorLines.push(forceVectorLine);
+    }
+
+    for (const centerSphere of centerSpheres) {
+      this.scene.add(centerSphere);
+      this.removableObjects.push(centerSphere);
+    }
+    for (const forceVectorLine of forceVectorLines) {
+      this.scene.add(forceVectorLine);
+      this.removableObjects.push(forceVectorLine);
+    }
+    for (const ghostAtomSphere of ghostAtomSpheres) {
+      this.scene.add(ghostAtomSphere);
+      this.removableObjects.push(ghostAtomSphere);
+    }
+    for (const atomSphere of atomSpheres) {
+      this.scene.add(atomSphere);
+      this.removableObjects.push(atomSphere);
+    }
   }
 }
 
