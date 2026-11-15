@@ -68,13 +68,13 @@ class XyzReader {
     const numAtoms = Number(this.lines[this.lineIndex++]);
     const metadata = this.toMetadata(this.lines[this.lineIndex++]);
     const properties = this.toProperties(metadata);
-    const isExtendedXyz = properties !== undefined;
 
     const atoms = [];
 
     for (let i = 0; i < numAtoms; i++) {
       const line = this.lines[this.lineIndex++];
 
+      const isExtendedXyz = properties !== undefined;
       if (isExtendedXyz) {
         atoms.push(this.toAtomExtendedXyz(line, properties));
       } else {
@@ -263,10 +263,11 @@ class Visualizer {
         continue;
       }
       const { radius, color } = {
-        H: { radius: 1.1, color: "white" },
-        C: { radius: 1.7, color: "gray" },
-        O: { radius: 1.52, color: "red" },
-      }[atom.species] || { radius: 1, color: "magenta" };
+        H: { radius: 1.1, color: "#FFFFFF" },
+        C: { radius: 1.7, color: "#808080" },
+        N: { radius: 1.55, color: "#4040FF" },
+        O: { radius: 1.52, color: "#FF4040", },
+      }[atom.species] || { radius: 1, color: "#FF40FF" };
 
       if (atom.pos === undefined) {
         continue;
@@ -303,10 +304,15 @@ class Visualizer {
       }
       const [fx, fy, fz] = atom.forces;
 
+      const forceMagnification = 10;
       const line = new Line2(
         new LineGeometry().setFromPoints([
           new THREE.Vector3(x, y, z),
-          new THREE.Vector3(x + fx, y + fy, z + fz),
+          new THREE.Vector3(
+            x + forceMagnification * fx,
+            y + forceMagnification * fy,
+            z + forceMagnification * fz,
+          ),
         ]),
         new LineMaterial({
           linewidth: 1 / 16,
