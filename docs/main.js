@@ -207,6 +207,20 @@ class Visualizer {
     this.renderer.setAnimationLoop((time) => {
       this.render(time);
     });
+
+    this.newMoleculeIndex = 0;
+    document.getElementById("molecule-frame-back").addEventListener("click", () => {
+      this.newMoleculeIndex--;
+      if (this.newMoleculeIndex < 0) {
+        this.newMoleculeIndex = this.molecules.length - 1;
+      }
+    });
+    document.getElementById("molecule-frame-fore").addEventListener("click", () => {
+      this.newMoleculeIndex++;
+      if (this.newMoleculeIndex >= this.molecules.length) {
+        this.newMoleculeIndex = 0;
+      }
+    });
   }
 
   changeMolecules(molecules) {
@@ -214,7 +228,7 @@ class Visualizer {
     this.prevMoleculeIndex = undefined;
   }
 
-  render(time) {
+  render() {
     const width = Math.floor(window.innerWidth * window.devicePixelRatio);
     const height = Math.floor(window.innerHeight * window.devicePixelRatio);
     const needResize =
@@ -229,11 +243,11 @@ class Visualizer {
     }
 
     if (this.molecules !== undefined && this.molecules.length >= 1) {
-      let moleculeIndex = Math.floor(time / 1000) % this.molecules.length;
+      if (this.newMoleculeIndex !== this.prevMoleculeIndex) {
+        this.prevMoleculeIndex = this.newMoleculeIndex;
+        this.renderRemovableObjects(this.newMoleculeIndex);
 
-      if (moleculeIndex !== this.prevMoleculeIndex) {
-        this.prevMoleculeIndex = moleculeIndex;
-        this.renderRemovableObjects(moleculeIndex);
+        document.getElementById("molecule-frame").innerText = `${this.newMoleculeIndex}/${this.molecules.length}`;
       }
     }
 
