@@ -4,7 +4,6 @@ import * as THREE from "three";
 import { TrackballControls } from "three/addons/controls/TrackballControls.js";
 import { Line2 } from "three/addons/lines/Line2.js";
 import { LineGeometry } from "three/addons/lines/LineGeometry.js";
-// Typo in the official Three.js document? "LineLineGeometry2"/
 import { LineMaterial } from "three/addons/lines/LineMaterial.js";
 
 class App {
@@ -276,7 +275,7 @@ class Visualizer {
 
       const centerSphere = new THREE.Mesh(
         new THREE.SphereGeometry(1 / 4, 32, 16),
-        new THREE.MeshPhongMaterial({ color: "cyan" }),
+        new THREE.MeshPhongMaterial({ color }),
       );
       centerSphere.position.set(x, y, z);
       centerSpheres.push(centerSphere);
@@ -291,9 +290,9 @@ class Visualizer {
       const atomSphere = new THREE.Mesh(
         new THREE.SphereGeometry(radius, 32, 16),
         new THREE.MeshPhongMaterial({
-          color: color,
+          color,
           transparent: true,
-          opacity: 0.5,
+          opacity: 0.25,
         }),
       );
       atomSphere.position.set(x, y, z);
@@ -304,32 +303,18 @@ class Visualizer {
       }
       const [fx, fy, fz] = atom.forces;
 
-      const lineGeometry = new LineGeometry();
-      lineGeometry.setFromPoints([
-        new THREE.Vector3(x, y, z),
-        new THREE.Vector3(x + fx, y + fy, z + fz),
-      ]);
       const line = new Line2(
-        lineGeometry,
+        new LineGeometry().setFromPoints([
+          new THREE.Vector3(x, y, z),
+          new THREE.Vector3(x + fx, y + fy, z + fz),
+        ]),
         new LineMaterial({
           linewidth: 1 / 16,
-          color: "magenta",
+          color,
           worldUnits: true,
         }),
       );
       forceVectorLines.push(line);
-      // Another typo in the official Three.js doc?
-      // "Line2" > "Code Example"
-      // the "const material" line has opening ( { but has closing } and "}" !
-
-      const forceVectorLine = new THREE.Line(
-        new THREE.BufferGeometry().setFromPoints([
-          new THREE.Vector3(x, y, z),
-          new THREE.Vector3(x + fx, y + fy, z + fz),
-        ]),
-        new THREE.LineBasicMaterial({ color: "magenta" }),
-      );
-      // forceVectorLines.push(forceVectorLine);
     }
 
     for (const centerSphere of centerSpheres) {
