@@ -182,6 +182,7 @@ class Visualizer {
     this.canvas = document.getElementById("canvas");
 
     this.scene = new THREE.Scene();
+    this.scene.background = new THREE.Color("lightblue");
 
     const ambientLight = new THREE.AmbientLight("white", 1);
     this.scene.add(ambientLight);
@@ -209,18 +210,22 @@ class Visualizer {
     });
 
     this.newMoleculeIndex = 0;
-    document.getElementById("molecule-frame-back").addEventListener("click", () => {
-      this.newMoleculeIndex--;
-      if (this.newMoleculeIndex < 0) {
-        this.newMoleculeIndex = this.molecules.length - 1;
-      }
-    });
-    document.getElementById("molecule-frame-fore").addEventListener("click", () => {
-      this.newMoleculeIndex++;
-      if (this.newMoleculeIndex >= this.molecules.length) {
-        this.newMoleculeIndex = 0;
-      }
-    });
+    document
+      .getElementById("molecule-frame-back")
+      .addEventListener("click", () => {
+        this.newMoleculeIndex--;
+        if (this.newMoleculeIndex < 0) {
+          this.newMoleculeIndex = this.molecules.length - 1;
+        }
+      });
+    document
+      .getElementById("molecule-frame-fore")
+      .addEventListener("click", () => {
+        this.newMoleculeIndex++;
+        if (this.newMoleculeIndex >= this.molecules.length) {
+          this.newMoleculeIndex = 0;
+        }
+      });
   }
 
   changeMolecules(molecules) {
@@ -247,7 +252,8 @@ class Visualizer {
         this.prevMoleculeIndex = this.newMoleculeIndex;
         this.renderRemovableObjects(this.newMoleculeIndex);
 
-        document.getElementById("molecule-frame").innerText = `${this.newMoleculeIndex}/${this.molecules.length}`;
+        document.getElementById("molecule-frame").innerText =
+          `${this.newMoleculeIndex}/${this.molecules.length}`;
       }
     }
 
@@ -272,6 +278,7 @@ class Visualizer {
     const forceVectorLines = [];
     const ghostAtomSpheres = [];
     const atomSpheres = [];
+    const labels = [];
 
     for (const atom of molecule.atoms) {
       // Van der Waars radii are according to [A. Bondi, 1964].
@@ -287,7 +294,7 @@ class Visualizer {
         H: { radius: 1.1, color: "#FFFFFF" },
         C: { radius: 1.7, color: "#808080" },
         N: { radius: 1.55, color: "#4040FF" },
-        O: { radius: 1.52, color: "#FF4040", },
+        O: { radius: 1.52, color: "#FF4040" },
       }[atom.species] || { radius: 1, color: "#FF40FF" };
 
       if (atom.pos === undefined) {
@@ -297,14 +304,14 @@ class Visualizer {
 
       const centerSphere = new THREE.Mesh(
         new THREE.SphereGeometry(1 / 4, 32, 16),
-        new THREE.MeshPhongMaterial({ color }),
+        new THREE.MeshPhongMaterial({ color, transparent: true, opacity: 0.5 }),
       );
       centerSphere.position.set(x, y, z);
       centerSpheres.push(centerSphere);
 
       const ghostAtomSphere = new THREE.Mesh(
         new THREE.SphereGeometry(radius, 32, 16),
-        new THREE.MeshPhongMaterial({ colorWrite: false }),
+        new THREE.MeshPhongMaterial({ colorWrite: false, depthWrite: false }),
       );
       ghostAtomSphere.position.set(x, y, z);
       ghostAtomSpheres.push(ghostAtomSphere);
@@ -342,12 +349,43 @@ class Visualizer {
         }),
       );
       forceVectorLines.push(line);
+
+      {
+        const ctx = document.createElement("canvas").getContext("2d");
+        ctx.canvas.width = 1000;
+        ctx.canvas.height = 1000;
+        ctx.textBaseline = "middle";
+        ctx.textAlign = "center";
+        ctx.font = "25em system-ui";
+        ctx.fillStyle = "white";
+        const text = atom.species;
+        ctx.fillText(text, 500, 500);
+
+        const canvas = ctx.canvas;
+
+        const texture = new THREE.CanvasTexture(canvas);
+        const labelMaterial = new THREE.SpriteMaterial({
+          map: texture,
+          transparent: true,
+          depthTest: false,
+          depthWrite: false,
+        });
+        // YES!!!! This is what I wanted
+        const label = new THREE.Sprite(labelMaterial);
+        label.position.set(x, y, z);
+        labels.push(label);
+      }
     }
 
     for (const centerSphere of centerSpheres) {
       this.scene.add(centerSphere);
       this.removableObjects.push(centerSphere);
     }
+    for (const label of labels) {
+      this.scene.add(label);
+      this.removableObjects.push(label);
+    }
+    /*
     for (const forceVectorLine of forceVectorLines) {
       this.scene.add(forceVectorLine);
       this.removableObjects.push(forceVectorLine);
@@ -360,6 +398,7 @@ class Visualizer {
       this.scene.add(atomSphere);
       this.removableObjects.push(atomSphere);
     }
+    */
   }
 }
 
