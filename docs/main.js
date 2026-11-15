@@ -2,6 +2,10 @@
 
 import * as THREE from "three";
 import { TrackballControls } from "three/addons/controls/TrackballControls.js";
+import { Line2 } from "three/addons/lines/Line2.js";
+import { LineGeometry } from "three/addons/lines/LineGeometry.js";
+// Typo in the official Three.js document? "LineLineGeometry2"/
+import { LineMaterial } from "three/addons/lines/LineMaterial.js";
 
 class App {
   constructor() {
@@ -189,7 +193,7 @@ class Visualizer {
 
     this.camera = new THREE.PerspectiveCamera();
     this.camera.aspect = this.canvas.clientWidth / this.canvas.clientHeight;
-    this.camera.position.set(0, 0, 100);
+    this.camera.position.set(0, 0, 16);
 
     this.controls = new TrackballControls(this.camera, this.canvas);
     this.controls.update();
@@ -300,6 +304,24 @@ class Visualizer {
       }
       const [fx, fy, fz] = atom.forces;
 
+      const lineGeometry = new LineGeometry();
+      lineGeometry.setFromPoints([
+        new THREE.Vector3(x, y, z),
+        new THREE.Vector3(x + fx, y + fy, z + fz),
+      ]);
+      const line = new Line2(
+        lineGeometry,
+        new LineMaterial({
+          linewidth: 1 / 16,
+          color: "magenta",
+          worldUnits: true,
+        }),
+      );
+      forceVectorLines.push(line);
+      // Another typo in the official Three.js doc?
+      // "Line2" > "Code Example"
+      // the "const material" line has opening ( { but has closing } and "}" !
+
       const forceVectorLine = new THREE.Line(
         new THREE.BufferGeometry().setFromPoints([
           new THREE.Vector3(x, y, z),
@@ -307,7 +329,7 @@ class Visualizer {
         ]),
         new THREE.LineBasicMaterial({ color: "magenta" }),
       );
-      forceVectorLines.push(forceVectorLine);
+      // forceVectorLines.push(forceVectorLine);
     }
 
     for (const centerSphere of centerSpheres) {
