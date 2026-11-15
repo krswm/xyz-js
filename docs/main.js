@@ -179,20 +179,17 @@ class Visualizer {
     const directionalLight = new THREE.DirectionalLight("white", 2);
     this.scene.add(directionalLight);
 
-    this.renderer = new THREE.WebGLRenderer();
+    const canvas = document.getElementById("canvas");
+
+    this.renderer = new THREE.WebGLRenderer({ canvas });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.sortObjects = false;
-
-    document.body.appendChild(this.renderer.domElement);
 
     this.camera = new THREE.PerspectiveCamera();
     this.camera.aspect = window.innerWidth / window.innerHeight;
     this.camera.position.set(0, 0, 100);
 
-    this.controls = new TrackballControls(
-      this.camera,
-      this.renderer.domElement,
-    );
+    this.controls = new TrackballControls(this.camera, canvas);
     this.controls.update();
 
     this.molecules = undefined;

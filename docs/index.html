@@ -1,6 +1,14 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="XYZ Molecule Visualizer • For visualizing inputs and outputs of MLIP"
+    />
+    <title>XYZ Molecule Visualizer</title>
+    <link rel="stylesheet" href="style.css" />
     <script type="importmap">
       {
         "imports": {
@@ -11,7 +19,18 @@
     </script>
   </head>
   <body>
-    <input id="file-input" type="file" accept="*" />
+    <canvas id="canvas"></canvas>
+    <div id="header">
+      <div id="title">XYZ Molecule Visualizer</div>
+      <div id="repo-link">
+        <a href="https://github.com/krswm/xyz-js"
+          >Source code and more info on GitHub</a
+        >
+      </div>
+    </div>
+    <div id="footer">
+      <input id="file-input" type="file" accept="*" />
+    </div>
     <script src="main.js" type="module"></script>
   </body>
 </html>
