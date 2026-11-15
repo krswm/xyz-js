@@ -278,6 +278,7 @@ class Visualizer {
     const forceVectorLines = [];
     const ghostAtomSpheres = [];
     const atomSpheres = [];
+    const ghostLabels = [];
     const labels = [];
 
     for (const atom of molecule.atoms) {
@@ -305,13 +306,14 @@ class Visualizer {
       const centerSphere = new THREE.Mesh(
         new THREE.SphereGeometry(1 / 4, 32, 16),
         new THREE.MeshPhongMaterial({ color, transparent: true, opacity: 0.5 }),
+        // yes! transparent object inside transparent object
       );
       centerSphere.position.set(x, y, z);
       centerSpheres.push(centerSphere);
 
       const ghostAtomSphere = new THREE.Mesh(
         new THREE.SphereGeometry(radius, 32, 16),
-        new THREE.MeshPhongMaterial({ colorWrite: false, depthWrite: false }),
+        new THREE.MeshPhongMaterial({ colorWrite: false, transparent: true }),
       );
       ghostAtomSphere.position.set(x, y, z);
       ghostAtomSpheres.push(ghostAtomSphere);
@@ -357,7 +359,7 @@ class Visualizer {
         ctx.textBaseline = "middle";
         ctx.textAlign = "center";
         ctx.font = "25em system-ui";
-        ctx.fillStyle = "white";
+        ctx.fillStyle = color;
         const text = atom.species;
         ctx.fillText(text, 500, 500);
 
@@ -366,26 +368,58 @@ class Visualizer {
         const texture = new THREE.CanvasTexture(canvas);
         const labelMaterial = new THREE.SpriteMaterial({
           map: texture,
+          colorWrite: false,
           transparent: true,
+        });
+        const label = new THREE.Sprite(labelMaterial);
+        label.position.set(x, y, z);
+        ghostLabels.push(label);
+      }
+
+      {
+        const ctx = document.createElement("canvas").getContext("2d");
+        ctx.canvas.width = 1000;
+        ctx.canvas.height = 1000;
+        ctx.textBaseline = "middle";
+        ctx.textAlign = "center";
+        ctx.font = "25em system-ui";
+        ctx.fillStyle = color;
+        const text = atom.species;
+        ctx.fillText(text, 500, 500);
+
+        const canvas = ctx.canvas;
+
+        const texture = new THREE.CanvasTexture(canvas);
+        /*
+        const labelMaterial = new THREE.SpriteMaterial({
+          map: texture,
           depthTest: false,
           depthWrite: false,
         });
-        // YES!!!! This is what I wanted
+        */
+        const labelMaterial = new THREE.SpriteMaterial({
+          map: texture,
+        });
         const label = new THREE.Sprite(labelMaterial);
-        label.position.set(x, y, z);
+        label.position.set(x, y, z + 1);
         labels.push(label);
       }
     }
 
-    for (const centerSphere of centerSpheres) {
-      this.scene.add(centerSphere);
-      this.removableObjects.push(centerSphere);
+    /*
+    for (const ghostLabel of ghostLabels) {
+      this.scene.add(ghostLabel);
+      this.removableObjects.push(ghostLabel);
     }
     for (const label of labels) {
       this.scene.add(label);
       this.removableObjects.push(label);
     }
-    /*
+    */
+    for (const centerSphere of centerSpheres) {
+      this.scene.add(centerSphere);
+      this.removableObjects.push(centerSphere);
+    }
     for (const forceVectorLine of forceVectorLines) {
       this.scene.add(forceVectorLine);
       this.removableObjects.push(forceVectorLine);
@@ -398,7 +432,6 @@ class Visualizer {
       this.scene.add(atomSphere);
       this.removableObjects.push(atomSphere);
     }
-    */
   }
 }
 
