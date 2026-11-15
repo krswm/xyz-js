@@ -166,7 +166,7 @@ class XyzReader {
   }
 
   toAtomXyz(line) {
-    const [species, x, y, z] = line.split(/\s+/);
+    const [species, x, y, z] = line.trim().split(/\s+/);
     const pos = [x, y, z];
     const forces = undefined;
 
