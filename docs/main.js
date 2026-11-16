@@ -2,6 +2,7 @@
 
 import * as THREE from "three";
 import { TrackballControls } from "three/addons/controls/TrackballControls.js";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { Line2 } from "three/addons/lines/Line2.js";
 import { LineGeometry } from "three/addons/lines/LineGeometry.js";
 import { LineMaterial } from "three/addons/lines/LineMaterial.js";
@@ -226,6 +227,8 @@ class Visualizer {
           this.newMoleculeIndex = 0;
         }
       });
+
+    this.centerSpheres = [];
   }
 
   changeMolecules(molecules) {
@@ -255,6 +258,12 @@ class Visualizer {
         document.getElementById("molecule-frame").innerText =
           `${this.newMoleculeIndex}/${this.molecules.length}`;
       }
+    }
+
+    for (const centerSphere of this.centerSpheres) {
+      // let [xx, yy, zz] = this.camera.position
+      centerSphere.up = this.camera.up;
+      centerSphere.lookAt(this.camera.position);
     }
 
     this.controls.update();
@@ -303,13 +312,46 @@ class Visualizer {
       }
       const [x, y, z] = atom.pos;
 
-      const centerSphere = new THREE.Mesh(
-        new THREE.SphereGeometry(1 / 4, 32, 16),
-        new THREE.MeshPhongMaterial({ color, transparent: true, opacity: 0.5 }),
-        // yes! transparent object inside transparent object
-      );
-      centerSphere.position.set(x, y, z);
-      centerSpheres.push(centerSphere);
+      {
+        const ctx = document.createElement("canvas").getContext("2d");
+        ctx.canvas.width = 2000;
+        ctx.canvas.height = 1000;
+        ctx.fillStyle = color;
+        ctx.fillRect(0, 0, 1000, 1000);
+        ctx.textBaseline = "middle";
+        ctx.textAlign = "center";
+        ctx.font = "25em system-ui";
+        ctx.fillStyle = "lime";
+        const text = atom.species;
+        ctx.fillText(text, 500, 500);
+
+        const canvas = ctx.canvas;
+
+        const texture = new THREE.CanvasTexture(canvas);
+        /*
+        const labelMaterial = new THREE.SpriteMaterial({
+          map: texture,
+          depthTest: false,
+          depthWrite: false,
+        });
+        */
+        /*
+        const labelMaterial = new THREE.SpriteMaterial({
+          map: texture,
+        });
+        const label = new THREE.Sprite(labelMaterial);
+        label.position.set(x, y, z + 1);
+        labels.push(label);
+        */
+
+        const centerSphere = new THREE.Mesh(
+          new THREE.SphereGeometry(1 / 4, 32, 16),
+          new THREE.MeshPhongMaterial({ map: texture }),
+          // yes! transparent object inside transparent object
+        );
+        centerSphere.position.set(x, y, z);
+        centerSpheres.push(centerSphere);
+      }
 
       const ghostAtomSphere = new THREE.Mesh(
         new THREE.SphereGeometry(radius, 32, 16),
@@ -351,59 +393,6 @@ class Visualizer {
         }),
       );
       forceVectorLines.push(line);
-
-      {
-        const ctx = document.createElement("canvas").getContext("2d");
-        ctx.canvas.width = 1000;
-        ctx.canvas.height = 1000;
-        ctx.textBaseline = "middle";
-        ctx.textAlign = "center";
-        ctx.font = "25em system-ui";
-        ctx.fillStyle = color;
-        const text = atom.species;
-        ctx.fillText(text, 500, 500);
-
-        const canvas = ctx.canvas;
-
-        const texture = new THREE.CanvasTexture(canvas);
-        const labelMaterial = new THREE.SpriteMaterial({
-          map: texture,
-          colorWrite: false,
-          transparent: true,
-        });
-        const label = new THREE.Sprite(labelMaterial);
-        label.position.set(x, y, z);
-        ghostLabels.push(label);
-      }
-
-      {
-        const ctx = document.createElement("canvas").getContext("2d");
-        ctx.canvas.width = 1000;
-        ctx.canvas.height = 1000;
-        ctx.textBaseline = "middle";
-        ctx.textAlign = "center";
-        ctx.font = "25em system-ui";
-        ctx.fillStyle = color;
-        const text = atom.species;
-        ctx.fillText(text, 500, 500);
-
-        const canvas = ctx.canvas;
-
-        const texture = new THREE.CanvasTexture(canvas);
-        /*
-        const labelMaterial = new THREE.SpriteMaterial({
-          map: texture,
-          depthTest: false,
-          depthWrite: false,
-        });
-        */
-        const labelMaterial = new THREE.SpriteMaterial({
-          map: texture,
-        });
-        const label = new THREE.Sprite(labelMaterial);
-        label.position.set(x, y, z + 1);
-        labels.push(label);
-      }
     }
 
     /*
@@ -419,6 +408,7 @@ class Visualizer {
     for (const centerSphere of centerSpheres) {
       this.scene.add(centerSphere);
       this.removableObjects.push(centerSphere);
+      this.centerSpheres.push(centerSphere);
     }
     for (const forceVectorLine of forceVectorLines) {
       this.scene.add(forceVectorLine);
