@@ -183,7 +183,7 @@ class Visualizer {
     this.canvas = document.getElementById("canvas");
 
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color("lightblue");
+    this.scene.background = new THREE.Color("black");
 
     const ambientLight = new THREE.AmbientLight("white", 1);
     this.scene.add(ambientLight);
@@ -342,15 +342,37 @@ class Visualizer {
       // TODO: Cite more properly.
       // TODO: Consider different sources.
 
+      // TODO: Oklch -> RGB check again
+
       if (atom.species === undefined) {
         continue;
       }
-      const { radius, color } = {
-        H: { radius: 1.1, color: "#FFFFFF" },
-        C: { radius: 1.7, color: "#808080" },
-        N: { radius: 1.55, color: "#4040FF" },
-        O: { radius: 1.52, color: "#FF4040" },
-      }[atom.species] || { radius: 1, color: "#FF40FF" };
+      const { radius, color, symbolColor } = {
+        H: {
+          radius: 1.1,
+          color: "#FFFFFF", // oklch(100% 0% 0deg); white, obviously
+          symbolColor: "#AEAEAE", // oklch(75% 0% 0deg)
+        },
+        C: {
+          radius: 1.7,
+          color: "#636363", // oklch(50% 0% 0deg); gray
+          symbolColor: "#222222", // oklch(25% 0% 0deg)
+        },
+        N: {
+          radius: 1.55,
+          color: "#95ABEE", // oklch(75% 50% 270deg); blueish
+          symbolColor: "#4D5F9C", // oklch(50% 50% 270deg)
+        },
+        O: {
+          radius: 1.52,
+          color: "#E69688", // oklch(75% 50% 30deg); reddish
+          symbolColor: "#944B40", // oklch(50% 50% 30deg)
+        },
+      }[atom.species] || {
+        radius: 1.5, // Arbitrarily chosen value
+        color: "#7FC08C", // oklch(75% 50% 150deg); greenish
+        symbolColor: "#337344", // oklch(50% 50% 150deg)
+      };
 
       if (atom.pos === undefined) {
         continue;
@@ -359,16 +381,16 @@ class Visualizer {
 
       {
         const ctx = document.createElement("canvas").getContext("2d");
-        ctx.canvas.width = 2000;
-        ctx.canvas.height = 1000;
+        ctx.canvas.width = 128;
+        ctx.canvas.height = 64;
         ctx.fillStyle = color;
-        ctx.fillRect(0, 0, 2000, 1000);
+        ctx.fillRect(0, 0, 128, 64);
         ctx.textBaseline = "middle";
         ctx.textAlign = "center";
-        ctx.font = "25em system-ui";
-        ctx.fillStyle = "lime";
+        ctx.font = "bold 32px system-ui";
+        ctx.fillStyle = symbolColor;
         const text = atom.species;
-        ctx.fillText(text, 500, 500);
+        ctx.fillText(text, 32, 32);
 
         const canvas = ctx.canvas;
 
@@ -396,7 +418,7 @@ class Visualizer {
         new THREE.MeshPhongMaterial({
           color,
           transparent: true,
-          opacity: 0.25,
+          opacity: 0.5,
         }),
       );
       atomSphere.position.set(x, y, z);
