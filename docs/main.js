@@ -229,6 +229,19 @@ class Visualizer {
       });
 
     this.centerSpheres = [];
+
+    this.forceMagnification = 1.0;
+    document
+      .getElementById("force-magnification")
+      .addEventListener("input", (event) => {
+        console.log(event);
+        this.forceMagnification = event.target.valueAsNumber;
+        console.log(this.forceMagnification);
+      });
+
+    this.count = 0;
+
+    this.lineGeometries = [];
   }
 
   changeMolecules(molecules) {
@@ -236,7 +249,7 @@ class Visualizer {
     this.prevMoleculeIndex = undefined;
   }
 
-  render() {
+  render(time) {
     const width = Math.floor(window.innerWidth * window.devicePixelRatio);
     const height = Math.floor(window.innerHeight * window.devicePixelRatio);
     const needResize =
@@ -264,6 +277,40 @@ class Visualizer {
       // let [xx, yy, zz] = this.camera.position
       centerSphere.up = this.camera.up;
       centerSphere.lookAt(this.camera.position);
+    }
+
+    if (this.molecules !== undefined && this.molecules.length >= 1) {
+      for (
+        let i = 0;
+        i < this.molecules[this.newMoleculeIndex].atoms.length;
+        i++
+      ) {
+        const atom = this.molecules[this.newMoleculeIndex].atoms[i];
+
+        if (atom.pos === undefined) {
+          continue;
+        }
+        const [x, y, z] = atom.pos;
+
+        if (atom.forces === undefined) {
+          continue;
+        }
+        const [fx, fy, fz] = atom.forces;
+
+        const line = this.lineGeometries[i];
+        if (this.count++ < 100) {
+          console.log(this.lineGeometries);
+        }
+
+        line.setFromPoints([
+          new THREE.Vector3(x, y, z),
+          new THREE.Vector3(
+            x + this.forceMagnification * fx,
+            y + this.forceMagnification * fy,
+            z + this.forceMagnification * fz,
+          ),
+        ]);
+      }
     }
 
     this.controls.update();
@@ -376,16 +423,19 @@ class Visualizer {
       }
       const [fx, fy, fz] = atom.forces;
 
-      const forceMagnification = 10;
+      const lineGeometry = new LineGeometry();
+
+      lineGeometry.setFromPoints([
+        new THREE.Vector3(x, y, z),
+        new THREE.Vector3(
+          x + this.forceMagnification * fx,
+          y + this.forceMagnification * fy,
+          z + this.forceMagnification * fz,
+        ),
+      ]);
+
       const line = new Line2(
-        new LineGeometry().setFromPoints([
-          new THREE.Vector3(x, y, z),
-          new THREE.Vector3(
-            x + forceMagnification * fx,
-            y + forceMagnification * fy,
-            z + forceMagnification * fz,
-          ),
-        ]),
+        lineGeometry,
         new LineMaterial({
           linewidth: 1 / 16,
           color,
@@ -393,6 +443,7 @@ class Visualizer {
         }),
       );
       forceVectorLines.push(line);
+      this.lineGeometries.push(lineGeometry);
     }
 
     /*
