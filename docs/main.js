@@ -330,12 +330,10 @@ class Visualizer {
       this.scene.remove(removableObject);
     }
 
-    const centerSpheres = [];
-    const forceVectorLines = [];
-    const ghostAtomSpheres = [];
-    const atomSpheres = [];
-    const ghostLabels = [];
-    const labels = [];
+    const centerSpheres = new THREE.Group();
+    const forceVectorLines = new THREE.Group();
+    const ghostAtomSpheres = new THREE.Group();
+    const atomSpheres = new THREE.Group();
 
     for (const atom of molecule.atoms) {
       // Van der Waars radii are according to [A. Bondi, 1964].
@@ -364,7 +362,7 @@ class Visualizer {
         ctx.canvas.width = 2000;
         ctx.canvas.height = 1000;
         ctx.fillStyle = color;
-        ctx.fillRect(0, 0, 1000, 1000);
+        ctx.fillRect(0, 0, 2000, 1000);
         ctx.textBaseline = "middle";
         ctx.textAlign = "center";
         ctx.font = "25em system-ui";
@@ -375,21 +373,6 @@ class Visualizer {
         const canvas = ctx.canvas;
 
         const texture = new THREE.CanvasTexture(canvas);
-        /*
-        const labelMaterial = new THREE.SpriteMaterial({
-          map: texture,
-          depthTest: false,
-          depthWrite: false,
-        });
-        */
-        /*
-        const labelMaterial = new THREE.SpriteMaterial({
-          map: texture,
-        });
-        const label = new THREE.Sprite(labelMaterial);
-        label.position.set(x, y, z + 1);
-        labels.push(label);
-        */
 
         const centerSphere = new THREE.Mesh(
           new THREE.SphereGeometry(1 / 4, 32, 16),
@@ -397,7 +380,8 @@ class Visualizer {
           // yes! transparent object inside transparent object
         );
         centerSphere.position.set(x, y, z);
-        centerSpheres.push(centerSphere);
+        centerSpheres.add(centerSphere);
+        this.centerSpheres.push(centerSphere);
       }
 
       const ghostAtomSphere = new THREE.Mesh(
@@ -405,7 +389,7 @@ class Visualizer {
         new THREE.MeshPhongMaterial({ colorWrite: false, transparent: true }),
       );
       ghostAtomSphere.position.set(x, y, z);
-      ghostAtomSpheres.push(ghostAtomSphere);
+      ghostAtomSpheres.add(ghostAtomSphere);
 
       const atomSphere = new THREE.Mesh(
         new THREE.SphereGeometry(radius, 32, 16),
@@ -416,7 +400,7 @@ class Visualizer {
         }),
       );
       atomSphere.position.set(x, y, z);
-      atomSpheres.push(atomSphere);
+      atomSpheres.add(atomSphere);
 
       if (atom.forces === undefined) {
         continue;
@@ -442,37 +426,19 @@ class Visualizer {
           worldUnits: true,
         }),
       );
-      forceVectorLines.push(line);
+      forceVectorLines.add(line);
       this.lineGeometries.push(lineGeometry);
     }
 
-    /*
-    for (const ghostLabel of ghostLabels) {
-      this.scene.add(ghostLabel);
-      this.removableObjects.push(ghostLabel);
-    }
-    for (const label of labels) {
-      this.scene.add(label);
-      this.removableObjects.push(label);
-    }
-    */
-    for (const centerSphere of centerSpheres) {
-      this.scene.add(centerSphere);
-      this.removableObjects.push(centerSphere);
-      this.centerSpheres.push(centerSphere);
-    }
-    for (const forceVectorLine of forceVectorLines) {
-      this.scene.add(forceVectorLine);
-      this.removableObjects.push(forceVectorLine);
-    }
-    for (const ghostAtomSphere of ghostAtomSpheres) {
-      this.scene.add(ghostAtomSphere);
-      this.removableObjects.push(ghostAtomSphere);
-    }
-    for (const atomSphere of atomSpheres) {
-      this.scene.add(atomSphere);
-      this.removableObjects.push(atomSphere);
-    }
+    this.scene.add(centerSpheres);
+    this.scene.add(forceVectorLines);
+    this.scene.add(ghostAtomSpheres);
+    this.scene.add(atomSpheres);
+
+    this.removableObjects.push(centerSpheres);
+    this.removableObjects.push(forceVectorLines);
+    this.removableObjects.push(ghostAtomSpheres);
+    this.removableObjects.push(atomSpheres);
   }
 }
 
