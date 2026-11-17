@@ -2,20 +2,22 @@ body {
   margin: 0;
   height: 100%;
   font-family: system-ui;
+
+  background: black;
 }
 
 #header,
 #footer {
   position: absolute;
 
-  display: flex;
-  gap: 0.5em;
-
   padding: 0.5em;
 
   width: 100vw;
   height: 4em;
+  white-space: nowrap;
   box-sizing: border-box;
+
+  display: flex;
 
   /* background: #ff000040; */
 }
@@ -29,7 +31,6 @@ body {
 }
 
 #title {
-  flex: 1 1;
   place-self: center;
 
   font-size: 1.5em;
@@ -81,8 +82,76 @@ body {
   text-align: center;
 }
 
+#energy {
+  opacity: 25%;
+  color: white;
+  align-self: center;
+  width: 16rem;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
 #file-input {
   display: none;
+}
+
+#file-input-label {
+  justify-self: center;
+}
+
+#title {
+  position: absolute;
+  top: 0;
+  left: 0;
+  margin-top: 1rem;
+  margin-left: 1rem;
+}
+
+#file-input-label {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 1rem;
+}
+
+#repo-link {
+  position: absolute;
+  right: 0;
+  top: 0;
+
+  margin-top: 1rem;
+  margin-right: 1rem;
+}
+
+#energy {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  margin-bottom: 1rem;
+  margin-left: 1rem;
+}
+
+#molecule-frame-controller {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 1rem;
+
+  width: 24rem;
+
+  display: flex;
+  justify-content: space-between;
+}
+
+#force-magnification {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+
+  margin-bottom: 1rem;
+  margin-right: 1rem;
 }
 
 #canvas {

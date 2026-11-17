@@ -20,35 +20,37 @@
   </head>
   <body>
     <canvas id="canvas"></canvas>
-    <div id="header">
-      <div id="title">XYZ Molecule Visualizer</div>
-      <label class="button-label">
-        <div>
-          DROP AN XYZ FILE ON THE WINDOW<br />
-          OR CLICK HERE
-        </div>
-        <input id="file-input" type="file" accept="*" />
-      </label>
-      <a class="button-label" href="https://github.com/krswm/xyz-js">
-        <div>
-          GO TO REPO ON GITHUB<br />
-          SOURCE CODE & MORE INFO
-        </div>
-      </a>
-    </div>
-    <div id="footer">
-      <div id="energy"></div>
+    <div id="title">XYZ Molecule Visualizer</div>
+
+    <label class="button-label" id="file-input-label">
+      <div>
+        DROP AN XYZ FILE ON THE WINDOW<br />
+        OR CLICK HERE
+      </div>
+      <input id="file-input" type="file" accept="*" />
+    </label>
+
+    <a
+      class="button-label"
+      href="https://github.com/krswm/xyz-js"
+      id="repo-link"
+    >
+      <div>
+        REPO ON GITHUB<br />
+        SOURCE CODE & MORE INFO
+      </div>
+    </a>
+
+    <div id="energy"></div>
+
+    <div id="molecule-frame-controller">
       <button class="button-label" id="molecule-frame-back">←</button>
       <div id="molecule-frame"></div>
       <button class="button-label" id="molecule-frame-fore">→</button>
-      <input
-        id="force-magnification"
-        type="range"
-        min="0"
-        max="100"
-        value="10"
-      />
     </div>
+
+    <input id="force-magnification" type="range" min="0" max="100" value="10" />
+
     <script src="main.js" type="module"></script>
   </body>
 </html>
