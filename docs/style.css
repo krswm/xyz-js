@@ -17,7 +17,7 @@ body {
   height: 3em;
   box-sizing: border-box;
 
-  background: #ff000040;
+  /* background: #ff000040; */
 }
 #header {
   top: 0;
@@ -51,8 +51,33 @@ body {
   opacity: 50%;
 }
 
+#file-input-label {
+  font-weight: bold;
+  font-size: 0.75em;
+  color: white;
+  opacity: 25%;
+  border: 2px solid white;
+  height: 3rem;
+  width: 16rem;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+}
+#file-input-label > div {
+  text-align: center;
+}
+#file-input-label:hover {
+  opacity: 50%;
+}
+#file-input-label:active {
+  opacity: 75%;
+}
+
 #file-input {
-  place-self: center;
+  display: none;
 }
 
 #canvas {
