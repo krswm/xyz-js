@@ -368,42 +368,36 @@ class Visualizer {
     const atomSpheres = new THREE.Group();
 
     for (const atom of molecule.atoms) {
-      // Van der Waars radii are according to [A. Bondi, 1964].
-      // A. Bondi: van der Waals Volumes and Radii.
-      // doi 10.1021/j100785a001
-      // TODO: Cite more properly.
-      // TODO: Consider different sources.
-
-      // TODO: Oklch -> RGB check again
-
       if (atom.species === undefined) {
         continue;
       }
+
+      // `radius` is an approximate Van der Waals radius.
       const { radius, color, symbolColor } = {
         H: {
           radius: 1.1,
-          color: "#FFFFFF", // oklch(100% 0% 0deg); white, obviously
-          symbolColor: "#AEAEAE", // oklch(75% 0% 0deg)
+          color: "#FFFFFF", // oklch(1.0 0.0 0) (white)
+          symbolColor: "#AEAEAE", // oklch(0.75 0.0 0)
         },
         C: {
           radius: 1.7,
-          color: "#636363", // oklch(50% 0% 0deg); gray
-          symbolColor: "#222222", // oklch(25% 0% 0deg)
+          color: "#636363", // oklch(0.5 0.0 0) (gray)
+          symbolColor: "#222222", // oklch(0.25 0.0 0)
         },
         N: {
-          radius: 1.55,
-          color: "#95ABEE", // oklch(75% 50% 270deg); blueish
-          symbolColor: "#4D5F9C", // oklch(50% 50% 270deg)
+          radius: 1.6,
+          color: "#95ABEE", // oklch(0.75 0.1 270) (blue)
+          symbolColor: "#4D5F9C", // oklch(0.5 0.1 270)
         },
         O: {
-          radius: 1.52,
-          color: "#E69688", // oklch(75% 50% 30deg); reddish
-          symbolColor: "#944B40", // oklch(50% 50% 30deg)
+          radius: 1.5,
+          color: "#E69688", // oklch(0.75 0.1 30) (red)
+          symbolColor: "#944B40", // oklch(0.5 0.1 30)
         },
       }[atom.species] || {
-        radius: 1.5, // Arbitrarily chosen value
-        color: "#7FC08C", // oklch(75% 50% 150deg); greenish
-        symbolColor: "#337344", // oklch(50% 50% 150deg)
+        radius: 1.5,
+        color: "#7FC08C", // oklch(0.75 0.1 150) (green)
+        symbolColor: "#337344", // oklch(0.5 0.1 150)
       };
 
       if (atom.pos === undefined) {
