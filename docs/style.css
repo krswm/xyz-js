@@ -14,7 +14,7 @@ body {
   padding: 0.5em;
 
   width: 100vw;
-  height: 3em;
+  height: 4em;
   box-sizing: border-box;
 
   /* background: #ff000040; */
@@ -38,23 +38,9 @@ body {
   opacity: 25%;
 }
 
-/*
-#repo-link {
-  flex: 1 1;
-  place-self: center;
-}
-#repo-link > a {
-  color: white;
-  opacity: 25%;
-  text-decoration: none;
-}
-#repo-link > a:hover {
-  opacity: 50%;
-}
-*/
-
 .button-label {
   color: white;
+  background: none;
   opacity: 25%;
   border: 2px solid white;
   height: 3rem;
@@ -66,18 +52,33 @@ body {
   justify-content: center;
   align-items: center;
   border-radius: 8px;
+
+  font-weight: bold;
+  font-size: 0.75rem;
 }
 .button-label > div {
   text-align: center;
-  font-weight: bold;
-  font-size: 0.75em;
-  color: white;
 }
 .button-label:hover {
   opacity: 50%;
 }
 .button-label:active {
   opacity: 75%;
+}
+
+#molecule-frame-back,
+#molecule-frame-fore {
+  font-size: 1.5rem;
+  width: 3rem;
+}
+
+#molecule-frame {
+  opacity: 25%;
+  color: white;
+  align-self: center;
+  width: 8rem;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
 }
 
 #file-input {
