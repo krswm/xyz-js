@@ -38,6 +38,7 @@ body {
   opacity: 25%;
 }
 
+/*
 #repo-link {
   flex: 1 1;
   place-self: center;
@@ -50,15 +51,15 @@ body {
 #repo-link > a:hover {
   opacity: 50%;
 }
+*/
 
-#file-input-label {
-  font-weight: bold;
-  font-size: 0.75em;
+.button-label {
   color: white;
   opacity: 25%;
   border: 2px solid white;
   height: 3rem;
   width: 16rem;
+  text-decoration: none;
 
   display: flex;
   flex-direction: column;
@@ -66,13 +67,16 @@ body {
   align-items: center;
   border-radius: 8px;
 }
-#file-input-label > div {
+.button-label > div {
   text-align: center;
+  font-weight: bold;
+  font-size: 0.75em;
+  color: white;
 }
-#file-input-label:hover {
+.button-label:hover {
   opacity: 50%;
 }
-#file-input-label:active {
+.button-label:active {
   opacity: 75%;
 }
 
