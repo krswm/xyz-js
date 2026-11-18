@@ -291,7 +291,7 @@ class Visualizer {
       this.molecules[this.moleculeIndex].energy === undefined
         ? "—" // em-dash
         : `${this.molecules[this.moleculeIndex].energy}`;
-    document.getElementById("energy").innerText = energy;
+    document.getElementById("energy-value").innerText = energy;
   }
 
   changeMolecules(molecules) {

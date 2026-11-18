@@ -1,55 +1,143 @@
+/*
+ * Ordering rule for this file:
+ *
+ * position
+ * top
+ * left
+ * transform
+ * width
+ * height
+ * margin
+ * padding-top
+ * padding-bottom
+ *
+ * display
+ * grid-template-rows
+ * justify-content
+ * align-items
+ *
+ * background
+ * color
+ *
+ * font-size
+ * font-family
+ * font-weight
+ * font-variant-numeric
+ *
+ * overflow
+ * cursor
+ */
+
 body {
   margin: 0;
-  height: 100%;
-  font-family: system-ui;
 
   background: black;
+
+  font-family: system-ui;
+
+  overflow: hidden;
 }
 
-#header,
-#footer {
-  position: absolute;
-
-  padding: 0.5em;
-
-  width: 100vw;
-  height: 4em;
-  white-space: nowrap;
-  box-sizing: border-box;
-
+#title,
+#drop-click-text,
+#energy-text,
+#energy-value {
   display: flex;
-
-  /* background: #ff000040; */
+  align-items: center;
 }
-#header {
+
+#drop-click-text,
+#energy-text {
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+
+#energy-value {
+  font-size: 1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+#canvas {
+  position: absolute;
   top: 0;
   left: 0;
+  width: 100vw;
+  height: 100vh;
+
+  background: black;
+
+  cursor: grab;
+
+  &:active {
+    cursor: grabbing;
+  }
 }
-#footer {
-  bottom: 0;
+
+#file-input-button {
+  position: absolute;
+  top: 0;
   left: 0;
+  width: 100vw;
+  height: 4em;
+
+  background: none;
+  color: rgb(from white r g b / 25%);
+
+  cursor: pointer;
+
+  &:hover {
+    background: rgb(from white r g b / 12.5%);
+    color: rgb(from white r g b / 37.5%);
+  }
+  &:active {
+    background: rgb(from white r g b / 25%);
+    color: rgb(from white r g b / 50%);
+  }
 }
 
-/*
 #title {
-  place-self: center;
+  position: absolute;
+  top: 0;
+  left: 1rem;
+  height: 4rem;
 
-  font-size: 1.5em;
+  justify-content: left;
+
+  font-size: 1.5rem;
   font-weight: bold;
-  color: white;
-  opacity: 25%;
+}
 
-  height: 3rem;
+#drop-click-text {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  height: 4rem;
 
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
   justify-content: center;
 }
-*/
 
-.button-label {
+#energy-container {
+  position: absolute;
+  top: 0;
+  right: 1rem;
+  height: 3rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+
+  display: grid;
+  grid-template-rows: 1rem 2rem;
+}
+
+#energy-text {
+  justify-content: right;
+}
+
+#energy-value {
+  justify-content: right;
+}
+
+.button {
   color: white;
   background: none;
   opacity: 25%;
@@ -66,20 +154,23 @@ body {
 
   font-weight: bold;
   font-size: 0.75rem;
+
+  cursor: pointer;
 }
-.button-label > div {
+.button > div {
   text-align: center;
 }
-.button-label:hover {
+.button:hover {
   opacity: 50%;
 }
-.button-label:active {
+.button:active {
   opacity: 75%;
 }
 
 #molecule-frame-back,
 #molecule-frame-fore {
   font-size: 1.5rem;
+  height: 3rem;
   width: 3rem;
 }
 
@@ -92,15 +183,6 @@ body {
   text-align: center;
 }
 
-#energy {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 16rem;
-  font-variant-numeric: tabular-nums;
-  text-align: center;
-}
-
 #file-input {
   display: none;
 }
@@ -108,25 +190,6 @@ body {
 #file-input-label {
   justify-self: center;
 }
-
-#energy {
-  position: absolute;
-  top: 0;
-  right: 0;
-  margin-top: 1rem;
-  margin-left: 1rem;
-}
-
-/*
-#repo-link {
-  position: absolute;
-  right: 0;
-  top: 0;
-
-  margin-top: 1rem;
-  margin-right: 1rem;
-}
-*/
 
 #force-magnification {
   position: absolute;
@@ -156,65 +219,11 @@ body {
 
   margin-bottom: 1rem;
   margin-right: 1rem;
+
+  height: 3rem;
+  width: 9rem;
 }
 
-#canvas {
-  width: 100%;
-  height: 100%;
-
-  display: block;
-
-  background: lime;
-}
-
-#title-container {
-  background: white;
-
-  position: absolute;
-  top: 0;
-  left: 0;
-
-  height: 4em;
-  width: 100vw;
-  background: none;
-  color: rgb(from white r g b / 25%);
-}
-#title-container:hover {
-  background: rgb(from white r g b / 12.5%);
-  color: rgb(from white r g b / 37.5%);
-}
-/*
-#title-container:click {
-  background: rgb(from white r g b / 50%);
-  color: rgb(from white r g b / 75%);
-}
-*/
-
-#title {
-  font-size: 1.5rem;
-  font-weight: bold;
-  position: absolute;
-  left: 0;
-  top: 0;
-  margin-top: 1rem;
-  margin-left: 1rem;
-  height: 2rem;
-
-  display: flex;
-  align-items: center;
-}
-
-#file-input-text {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  margin-top: 1rem;
+.description {
   font-size: 0.75rem;
-  height: 2rem;
-
-  display: flex;
-  align-items: center;
-
-  font-weight: bold;
 }
