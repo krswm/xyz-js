@@ -280,15 +280,19 @@ class Visualizer {
   }
 
   updateHTMLTexts() {
-    const moleculeFrame =
-      this.molecules === undefined
-        ? "0/0"
-        : `${this.moleculeIndex}/${this.molecules.length}`;
-    document.getElementById("frame-value").innerText = moleculeFrame;
-
     const emDash = "—";
     const hyphenMinus = "-";
     const minusSign = "−";
+
+    const moleculeFrame =
+      this.molecules === undefined
+        ? emDash
+        : `<span>${this.moleculeIndex}<span id="frame-value-fraction">/${this.molecules.length}</span></span>`;
+    // Enclose with <span>
+    // because it's inside flex box
+    // and the fraction part will raised (visually wrong)!
+    document.getElementById("frame-value").innerHTML = moleculeFrame;
+
     const energy =
       this.molecules === undefined ||
       this.molecules[this.moleculeIndex].energy === undefined

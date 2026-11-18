@@ -22,13 +22,16 @@
     <canvas id="canvas"></canvas>
 
     <label id="top-components">
+      <input id="file-input" type="file" accept="*" />
+
       <div id="title">XYZ Molecule Visualizer</div>
+
       <div id="drop-click-text">DROP AN XYZ FILE OR CLICK HERE</div>
+
       <div id="energy-container">
         <div id="energy-text">ENERGY</div>
         <div id="energy-value">&mdash;</div>
       </div>
-      <input id="file-input" type="file" accept="*" />
     </label>
 
     <div id="bottom-components">
@@ -47,7 +50,7 @@
 
       <div id="frame-container">
         <div id="frame-text">FRAME</div>
-        <div id="frame-value"></div>
+        <div id="frame-value">&mdash;</div>
       </div>
 
       <button id="frame-next-button">→</button>

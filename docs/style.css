@@ -12,6 +12,7 @@
  * margin
  * padding-top
  * padding-bottom
+ * box-sizing
  *
  * display
  * grid-template-rows
@@ -21,12 +22,15 @@
  * background
  * color
  * opacity
+ * border
  * border-radius
  *
  * font-size
  * font-family
  * font-weight
  * font-variant-numeric
+ * text-decoration
+ * text-align
  *
  * overflow
  * cursor
@@ -46,8 +50,7 @@ body {
 #drop-click-text,
 #energy-text,
 #energy-value,
-#frame-text,
-#frame-value {
+#frame-text {
   display: flex;
   align-items: center;
 }
@@ -108,8 +111,8 @@ body {
 
 #frame-prev-button,
 #frame-next-button {
-  height: 3rem;
   width: 3rem;
+  height: 3rem;
 
   font-size: 1.5rem;
 }
@@ -150,6 +153,10 @@ body {
     background: rgb(from white r g b / 25%);
     color: rgb(from white r g b / 50%);
   }
+}
+
+#file-input {
+  display: none;
 }
 
 #title {
@@ -220,6 +227,34 @@ body {
   transform: translateX(-50%) translateX(-6rem);
 }
 
+#frame-container {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  height: 5rem;
+
+  color: white;
+  opacity: 25%;
+}
+
+#frame-text {
+  justify-content: center;
+}
+
+#frame-value {
+  display: flex;
+  justify-content: center;
+  align-content: center;
+}
+
+#frame-value-fraction {
+  font-size: 1rem;
+  dominant-baseline: text-bottom;
+}
+
 #frame-next-button {
   position: absolute;
   top: 1rem;
@@ -227,58 +262,12 @@ body {
   transform: translateX(-50%) translateX(6rem);
 }
 
-#molecule-frame {
-  opacity: 25%;
-  color: white;
-  align-self: center;
-  width: 8rem;
-  font-variant-numeric: tabular-nums;
-  text-align: center;
-}
-
-#file-input {
-  display: none;
-}
-
-#file-input-label {
-  justify-self: center;
-}
-
-#force-magnification {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  margin-bottom: 1rem;
-  margin-left: 1rem;
-}
-
-#molecule-frame-controller {
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  margin-bottom: 1rem;
-
-  width: 24rem;
-
-  display: flex;
-  justify-content: space-between;
-}
-
 #repo-link {
   position: absolute;
-  right: 0;
-  bottom: 0;
-
-  margin-bottom: 1rem;
-  margin-right: 1rem;
-
-  height: 3rem;
+  right: 1rem;
+  bottom: 1rem;
   width: 9rem;
+  height: 3rem;
 
-  font-size: 0.75rem;
-}
-
-.description {
   font-size: 0.75rem;
 }
