@@ -287,7 +287,7 @@ class Visualizer {
     const moleculeFrame =
       this.molecules === undefined
         ? emDash
-        : `<span>${this.moleculeIndex}<span id="frame-value-fraction">/${this.molecules.length}</span></span>`;
+        : `<span>${this.moleculeIndex + 1}<span id="frame-value-fraction">/${this.molecules.length}</span></span>`;
     // Enclose with <span>
     // because it's inside flex box
     // and the fraction part will raised (visually wrong)!
