@@ -21,30 +21,44 @@
   <body>
     <canvas id="canvas"></canvas>
 
-    <label id="file-input-button">
+    <label id="top-components">
       <div id="title">XYZ Molecule Visualizer</div>
       <div id="drop-click-text">DROP AN XYZ FILE OR CLICK HERE</div>
       <div id="energy-container">
         <div id="energy-text">ENERGY</div>
-        <div id="energy-value"></div>
+        <div id="energy-value">&mdash;</div>
       </div>
       <input id="file-input" type="file" accept="*" />
     </label>
 
-    <a class="button" href="https://github.com/krswm/xyz-js" id="repo-link">
-      <div>
-        REPO ON GITHUB<br />
-        INFO & SOURCE
+    <div id="bottom-components">
+      <div id="force-magnification-container">
+        <div id="force-magnification-text">FORCE MAGNIFICATION</div>
+        <input
+          id="force-magnification-input"
+          type="range"
+          min="0"
+          max="100"
+          value="10"
+        />
       </div>
-    </a>
 
-    <div id="molecule-frame-controller">
-      <button class="button" id="molecule-frame-back">←</button>
-      <div id="molecule-frame"></div>
-      <button class="button" id="molecule-frame-fore">→</button>
+      <button id="frame-prev-button">←</button>
+
+      <div id="frame-container">
+        <div id="frame-text">FRAME</div>
+        <div id="frame-value"></div>
+      </div>
+
+      <button id="frame-next-button">→</button>
+
+      <a id="repo-link" href="https://github.com/krswm/xyz-js">
+        <div>
+          REPO ON GITHUB<br />
+          INFO & SOURCE
+        </div>
+      </a>
     </div>
-
-    <input id="force-magnification" type="range" min="0" max="100" value="10" />
 
     <script src="main.js" type="module"></script>
   </body>

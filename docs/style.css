@@ -3,7 +3,9 @@
  *
  * position
  * top
+ * bottom
  * left
+ * right
  * transform
  * width
  * height
@@ -18,6 +20,8 @@
  *
  * background
  * color
+ * opacity
+ * border-radius
  *
  * font-size
  * font-family
@@ -41,20 +45,73 @@ body {
 #title,
 #drop-click-text,
 #energy-text,
-#energy-value {
+#energy-value,
+#frame-text,
+#frame-value {
   display: flex;
   align-items: center;
 }
 
 #drop-click-text,
-#energy-text {
+#energy-text,
+#force-magnification-text,
+#frame-text {
   font-size: 0.75rem;
   font-weight: bold;
 }
 
-#energy-value {
-  font-size: 1rem;
+#energy-container,
+#force-magnification-container,
+#frame-container {
+  height: 3rem;
+
+  display: grid;
+  grid-template-rows: 1rem 2rem;
+}
+
+#energy-value,
+#frame-value {
+  font-size: 1.5rem;
   font-variant-numeric: tabular-nums;
+}
+
+#frame-prev-button,
+#frame-next-button,
+#repo-link {
+  box-sizing: border-box;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  background: none;
+  color: white;
+  opacity: 25%;
+  border: 2px solid;
+  border-radius: 0.5rem;
+
+  text-decoration: none;
+
+  cursor: pointer;
+
+  & > div {
+    font-weight: bold;
+    text-align: center;
+  }
+  &:hover {
+    opacity: 37.5%;
+  }
+  &:active {
+    opacity: 50%;
+  }
+}
+
+#frame-prev-button,
+#frame-next-button {
+  height: 3rem;
+  width: 3rem;
+
+  font-size: 1.5rem;
 }
 
 #canvas {
@@ -73,7 +130,7 @@ body {
   }
 }
 
-#file-input-button {
+#top-components {
   position: absolute;
   top: 0;
   left: 0;
@@ -121,12 +178,8 @@ body {
   position: absolute;
   top: 0;
   right: 1rem;
-  height: 3rem;
   padding-top: 0.5rem;
   padding-bottom: 0.5rem;
-
-  display: grid;
-  grid-template-rows: 1rem 2rem;
 }
 
 #energy-text {
@@ -137,41 +190,41 @@ body {
   justify-content: right;
 }
 
-.button {
+#bottom-components {
+  position: absolute;
+  bottom: 0;
+  left: 0rem;
+  width: 100vw;
+  height: 5rem;
+}
+
+#force-magnification-container {
+  position: absolute;
+  top: 0;
+  left: 1rem;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+
   color: white;
-  background: none;
   opacity: 25%;
-  border: 2px solid white;
-  height: 3rem;
-  width: 12rem;
-  text-decoration: none;
-
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  border-radius: 8px;
-
-  font-weight: bold;
-  font-size: 0.75rem;
-
-  cursor: pointer;
-}
-.button > div {
-  text-align: center;
-}
-.button:hover {
-  opacity: 50%;
-}
-.button:active {
-  opacity: 75%;
 }
 
-#molecule-frame-back,
-#molecule-frame-fore {
-  font-size: 1.5rem;
-  height: 3rem;
-  width: 3rem;
+#force-magnification-text {
+  justify-content: left;
+}
+
+#frame-prev-button {
+  position: absolute;
+  top: 1rem;
+  left: 50%;
+  transform: translateX(-50%) translateX(-6rem);
+}
+
+#frame-next-button {
+  position: absolute;
+  top: 1rem;
+  left: 50%;
+  transform: translateX(-50%) translateX(6rem);
 }
 
 #molecule-frame {
@@ -222,6 +275,8 @@ body {
 
   height: 3rem;
   width: 9rem;
+
+  font-size: 0.75rem;
 }
 
 .description {

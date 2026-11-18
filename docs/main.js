@@ -245,7 +245,7 @@ class Visualizer {
     this.moleculeIndex = 0;
     this.updateHTMLTexts();
     document
-      .getElementById("molecule-frame-back")
+      .getElementById("frame-prev-button")
       .addEventListener("click", () => {
         this.moleculeIndex--;
         if (this.moleculeIndex < 0) {
@@ -254,7 +254,7 @@ class Visualizer {
         this.updateHTMLTexts();
       });
     document
-      .getElementById("molecule-frame-fore")
+      .getElementById("frame-next-button")
       .addEventListener("click", () => {
         this.moleculeIndex++;
         if (this.moleculeIndex >= this.molecules.length) {
@@ -267,7 +267,7 @@ class Visualizer {
 
     this.forceMagnification = 1.0;
     document
-      .getElementById("force-magnification")
+      .getElementById("force-magnification-input")
       .addEventListener("input", (event) => {
         console.log(event);
         this.forceMagnification = event.target.valueAsNumber;
@@ -284,13 +284,16 @@ class Visualizer {
       this.molecules === undefined
         ? "0/0"
         : `${this.moleculeIndex}/${this.molecules.length}`;
-    document.getElementById("molecule-frame").innerText = moleculeFrame;
+    document.getElementById("frame-value").innerText = moleculeFrame;
 
+    const emDash = "—";
+    const hyphenMinus = "-";
+    const minusSign = "−";
     const energy =
       this.molecules === undefined ||
       this.molecules[this.moleculeIndex].energy === undefined
-        ? "—" // em-dash
-        : `${this.molecules[this.moleculeIndex].energy}`;
+        ? emDash
+        : `${this.molecules[this.moleculeIndex].energy.toFixed(6).replaceAll(hyphenMinus, minusSign)}`;
     document.getElementById("energy-value").innerText = energy;
   }
 
