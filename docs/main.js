@@ -242,22 +242,25 @@ class Visualizer {
       this.render(time);
     });
 
-    this.newMoleculeIndex = 0;
+    this.moleculeIndex = 0;
+    this.updateHTMLTexts();
     document
       .getElementById("molecule-frame-back")
       .addEventListener("click", () => {
-        this.newMoleculeIndex--;
-        if (this.newMoleculeIndex < 0) {
-          this.newMoleculeIndex = this.molecules.length - 1;
+        this.moleculeIndex--;
+        if (this.moleculeIndex < 0) {
+          this.moleculeIndex = this.molecules.length - 1;
         }
+        this.updateHTMLTexts();
       });
     document
       .getElementById("molecule-frame-fore")
       .addEventListener("click", () => {
-        this.newMoleculeIndex++;
-        if (this.newMoleculeIndex >= this.molecules.length) {
-          this.newMoleculeIndex = 0;
+        this.moleculeIndex++;
+        if (this.moleculeIndex >= this.molecules.length) {
+          this.moleculeIndex = 0;
         }
+        this.updateHTMLTexts();
       });
 
     this.centerSpheres = [];
@@ -276,48 +279,55 @@ class Visualizer {
     this.lineGeometries = [];
   }
 
+  updateHTMLTexts() {
+    const moleculeFrame =
+      this.molecules === undefined
+        ? "0/0"
+        : `${this.moleculeIndex}/${this.molecules.length}`;
+    document.getElementById("molecule-frame").innerText = moleculeFrame;
+
+    const energy =
+      this.molecules === undefined ||
+      this.molecules[this.moleculeIndex].energy === undefined
+        ? "—" // em-dash
+        : `${this.molecules[this.moleculeIndex].energy}`;
+    document.getElementById("energy").innerText = energy;
+  }
+
   changeMolecules(molecules) {
     this.molecules = molecules;
     this.prevMoleculeIndex = undefined;
+    this.updateHTMLTexts();
   }
 
   render(time) {
     const width = Math.floor(window.innerWidth * window.devicePixelRatio);
     const height = Math.floor(window.innerHeight * window.devicePixelRatio);
-    const needResize =
-      this.canvas.width !== width || this.canvas.height !== height;
-    if (needResize) {
+    if (this.canvas.width !== width || this.canvas.height !== height) {
       this.renderer.setSize(width, height, false);
-    }
-
-    if (needResize) {
-      this.camera.aspect = window.innerWidth / window.innerHeight;
+      this.camera.aspect = width / height;
       this.camera.updateProjectionMatrix();
     }
 
-    if (this.molecules !== undefined && this.molecules.length >= 1) {
-      if (this.newMoleculeIndex !== this.prevMoleculeIndex) {
-        this.prevMoleculeIndex = this.newMoleculeIndex;
-        this.renderRemovableObjects(this.newMoleculeIndex);
-
-        document.getElementById("molecule-frame").innerText =
-          `${this.newMoleculeIndex}/${this.molecules.length}`;
+    if (this.moleculeIndex !== this.prevMoleculeIndex) {
+      this.prevMoleculeIndex = this.moleculeIndex;
+      if (this.molecules !== undefined && this.molecules.length >= 1) {
+        this.renderRemovableObjects(this.moleculeIndex);
       }
     }
 
     for (const centerSphere of this.centerSpheres) {
-      // let [xx, yy, zz] = this.camera.position
-      centerSphere.up = this.camera.up;
       centerSphere.lookAt(this.camera.position);
+      centerSphere.up = this.camera.up;
     }
 
     if (this.molecules !== undefined && this.molecules.length >= 1) {
       for (
         let i = 0;
-        i < this.molecules[this.newMoleculeIndex].atoms.length;
+        i < this.molecules[this.moleculeIndex].atoms.length;
         i++
       ) {
-        const atom = this.molecules[this.newMoleculeIndex].atoms[i];
+        const atom = this.molecules[this.moleculeIndex].atoms[i];
 
         if (atom.pos === undefined) {
           continue;
@@ -355,8 +365,6 @@ class Visualizer {
     );
 
     const molecule = this.molecules[moleculeIndex];
-
-    document.getElementById("energy").innerText = molecule.energy;
 
     for (const removableObject of this.removableObjects) {
       this.scene.remove(removableObject);
