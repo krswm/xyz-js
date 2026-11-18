@@ -30,6 +30,7 @@ body {
   left: 0;
 }
 
+/*
 #title {
   place-self: center;
 
@@ -37,7 +38,16 @@ body {
   font-weight: bold;
   color: white;
   opacity: 25%;
+
+  height: 3rem;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  justify-content: center;
 }
+*/
 
 .button-label {
   color: white;
@@ -45,7 +55,7 @@ body {
   opacity: 25%;
   border: 2px solid white;
   height: 3rem;
-  width: 16rem;
+  width: 12rem;
   text-decoration: none;
 
   display: flex;
@@ -83,9 +93,9 @@ body {
 }
 
 #energy {
-  opacity: 25%;
-  color: white;
-  align-self: center;
+  position: absolute;
+  top: 0;
+  right: 0;
   width: 16rem;
   font-variant-numeric: tabular-nums;
   text-align: center;
@@ -99,22 +109,15 @@ body {
   justify-self: center;
 }
 
-#title {
+#energy {
   position: absolute;
   top: 0;
-  left: 0;
+  right: 0;
   margin-top: 1rem;
   margin-left: 1rem;
 }
 
-#file-input-label {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  margin-top: 1rem;
-}
-
+/*
 #repo-link {
   position: absolute;
   right: 0;
@@ -123,8 +126,9 @@ body {
   margin-top: 1rem;
   margin-right: 1rem;
 }
+*/
 
-#energy {
+#force-magnification {
   position: absolute;
   bottom: 0;
   left: 0;
@@ -145,7 +149,7 @@ body {
   justify-content: space-between;
 }
 
-#force-magnification {
+#repo-link {
   position: absolute;
   right: 0;
   bottom: 0;
@@ -161,4 +165,56 @@ body {
   display: block;
 
   background: lime;
+}
+
+#title-container {
+  background: white;
+
+  position: absolute;
+  top: 0;
+  left: 0;
+
+  height: 4em;
+  width: 100vw;
+  background: none;
+  color: rgb(from white r g b / 25%);
+}
+#title-container:hover {
+  background: rgb(from white r g b / 12.5%);
+  color: rgb(from white r g b / 37.5%);
+}
+/*
+#title-container:click {
+  background: rgb(from white r g b / 50%);
+  color: rgb(from white r g b / 75%);
+}
+*/
+
+#title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  position: absolute;
+  left: 0;
+  top: 0;
+  margin-top: 1rem;
+  margin-left: 1rem;
+  height: 2rem;
+
+  display: flex;
+  align-items: center;
+}
+
+#file-input-text {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 1rem;
+  font-size: 0.75rem;
+  height: 2rem;
+
+  display: flex;
+  align-items: center;
+
+  font-weight: bold;
 }

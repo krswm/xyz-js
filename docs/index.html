@@ -20,15 +20,21 @@
   </head>
   <body>
     <canvas id="canvas"></canvas>
-    <div id="title">XYZ Molecule Visualizer</div>
-
-    <label class="button-label" id="file-input-label">
-      <div>
-        DROP AN XYZ FILE ON THE WINDOW<br />
-        OR CLICK HERE
-      </div>
+    <label id="title-container">
+      <div id="title">XYZ Molecule Visualizer</div>
+      <div id="file-input-text">DROP AN XYZ FILE OR CLICK HERE</div>
+      <div id="energy"></div>
       <input id="file-input" type="file" accept="*" />
     </label>
+
+    <!--
+    <label class="button-label" id="file-input-label">
+      <div>
+        DROP AN XYZ FILE<br />
+        OR CLICK HERE
+      </div>
+    </label>
+    -->
 
     <a
       class="button-label"
@@ -37,11 +43,9 @@
     >
       <div>
         REPO ON GITHUB<br />
-        SOURCE CODE & MORE INFO
+        INFO & SOURCE
       </div>
     </a>
-
-    <div id="energy"></div>
 
     <div id="molecule-frame-controller">
       <button class="button-label" id="molecule-frame-back">←</button>
@@ -54,11 +58,3 @@
     <script src="main.js" type="module"></script>
   </body>
 </html>
-
-<!--
-
-<XYZ Molecule Visualizer> <Drop an .xyz or .extxyz file / or click here> <GitHub / Source & more info>
-
-<energy> <frame -> <frame i/total> <frame+> <force magnification>
-
--->
