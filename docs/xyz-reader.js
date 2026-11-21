@@ -1,24 +1,9 @@
-class Molecule {
-  constructor(atoms, energy) {
-    this.atoms = atoms;
-    this.energy = energy; // Number or `undefined`
-  }
-}
-
-class Atom {
-  constructor(species, pos, forces) {
-    this.species = species; // String or `undefined`
-    this.pos = pos; // `[x, y, z]` or `undefined`
-    this.forces = forces; // `[fx, fy, fz]` or `undefined`
-  }
-}
+// I referred to this specification of the XYZ and Extended XYZ formats:
+// https://www.ovito.org/docs/current/reference/file_formats/input/xyz.html
 
 export class XyzReaderError extends Error {}
 
 export class XyzReader {
-  // I referred to this specification of the XYZ and Extended XYZ format:
-  // https://www.ovito.org/docs/current/reference/file_formats/input/xyz.html
-
   constructor(fileContent) {
     console.log("%c%s", "font-family: ui-monospace;", fileContent);
 
@@ -113,42 +98,58 @@ export class XyzReader {
       }
 
       const property = { name, type, numColumns };
-
       properties.push(property);
     }
     return properties;
   }
 
   toAtom(line, properties) {
-    const splits = line.split(/\s+/);
+    const splits = line.trim().split(/\s+/);
 
     const data = {};
-
     let splitIndex = 0;
     for (const property of properties) {
-      const values = [];
+      if (splitIndex + property.numColumns > splits.len) {
+        break;
+      }
 
+      const values = [];
       for (let i = 0; i < property.numColumns; i++) {
         const value = splits[splitIndex++];
+        if (value === undefined) {
+          break;
+        }
 
         switch (property.type) {
-          case "S":
+          case "S": // String
             values.push(value);
             break;
-          case "I":
-          case "R":
-          case "L":
+          case "I": // Integer
+          case "R": // Real
+          case "L": // Logical
             values.push(Number(value));
             break;
         }
       }
-
       data[property.name] = values;
     }
 
-    const species = data.species[0];
-    const pos = data.pos;
-    const forces = data.forces || data.MACE_forces;
+    const dataSpecies = data.species || [];
+    const dataPos = data.pos || [];
+    const dataForces = data.forces || data.MACE_forces || [];
+
+    const species =
+      typeof data.species[0] === "string" && dataSpecies.length === 1
+        ? data.species[0]
+        : undefined;
+    const pos =
+      typeof dataPos[0] === "number" && dataPos.length === 3
+        ? dataPos
+        : undefined;
+    const forces =
+      typeof dataForces[0] === "number" && dataForces.length === 3
+        ? dataForces
+        : undefined;
 
     return { species, pos, forces };
   }
