@@ -10,8 +10,6 @@
  * width
  * height
  * margin
- * padding-top
- * padding-bottom
  * box-sizing
  *
  * display
@@ -46,79 +44,7 @@ body {
   font-family: system-ui;
 
   overflow: hidden;
-}
-
-#title,
-#drop-click-text,
-#energy-text,
-#energy-value,
-#frame-text {
-  display: flex;
-  align-items: center;
-}
-
-#drop-click-text,
-#energy-text,
-#force-magnification-text,
-#frame-text {
-  font-size: 0.75rem;
-  font-weight: bold;
-}
-
-#energy-container,
-#force-magnification-container,
-#frame-container {
-  height: 3rem;
-  padding-top: 1rem;
-  padding-bottom: 1rem;
-
-  display: grid;
-  grid-template-rows: 1rem 2rem;
-}
-
-#energy-value,
-#frame-value {
-  font-size: 1.5rem;
-  font-variant-numeric: tabular-nums;
-}
-
-#frame-prev-button,
-#frame-next-button,
-#repo-link {
-  box-sizing: border-box;
-
-  display: flex;
-  justify-content: center;
-  align-items: center;
-
-  background: none;
-  color: white;
-  opacity: 25%;
-  border: 2px solid;
-  border-radius: 0.5rem;
-
-  text-decoration: none;
-
-  cursor: pointer;
-
-  & > div {
-    font-weight: bold;
-    text-align: center;
-  }
-  &:hover {
-    opacity: 37.5%;
-  }
-  &:active {
-    opacity: 50%;
-  }
-}
-
-#frame-prev-button,
-#frame-next-button {
-  width: 3rem;
-  height: 3rem;
-
-  font-size: 1.5rem;
+  cursor: default;
 }
 
 #canvas {
@@ -135,6 +61,80 @@ body {
   &:active {
     cursor: grabbing;
   }
+}
+
+#title,
+#drop-click-text,
+#energy-text,
+#energy-value,
+#frame-text {
+  display: flex;
+  align-items: center;
+}
+
+#drop-click-text,
+#energy-text,
+#force-magnification-text,
+#frame-text,
+#repo-link {
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+
+#energy-container,
+#force-magnification-container,
+#frame-container {
+  height: 3rem;
+
+  display: grid;
+  grid-template-rows: 1rem 2rem;
+}
+
+#energy-value,
+#frame-value {
+  font-size: 1.5rem;
+  font-variant-numeric: tabular-nums;
+}
+
+#force-magnification-input,
+#frame-prev-button,
+#frame-next-button,
+#repo-link {
+  background: none;
+  color: white;
+  opacity: 25%;
+
+  &:hover {
+    opacity: 37.5%;
+  }
+  &:active {
+    opacity: 50%;
+  }
+}
+
+#frame-prev-button,
+#frame-next-button,
+#repo-link {
+  box-sizing: border-box;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  border: 2px solid;
+  border-radius: 0.5rem;
+
+  text-decoration: none;
+
+  cursor: pointer;
+}
+
+#frame-prev-button,
+#frame-next-button {
+  width: 3rem;
+  height: 3rem;
+
+  font-size: 1.5rem;
 }
 
 #top-components {
@@ -165,9 +165,9 @@ body {
 
 #title {
   position: absolute;
-  top: 0;
+  top: 1rem;
   left: 1rem;
-  height: 5rem;
+  height: 3rem;
 
   justify-content: left;
 
@@ -177,17 +177,17 @@ body {
 
 #drop-click-text {
   position: absolute;
-  top: 0;
+  top: 1rem;
   left: 50%;
   transform: translateX(-50%);
-  height: 5rem;
+  height: 3rem;
 
   justify-content: center;
 }
 
 #energy-container {
   position: absolute;
-  top: 0;
+  top: 1rem;
   right: 1rem;
 }
 
@@ -205,6 +205,19 @@ body {
   left: 0rem;
   width: 100vw;
   height: 5rem;
+}
+
+#force-magnification-container {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+}
+
+#force-magnification-text {
+  justify-content: left;
+
+  color: white;
+  opacity: 25%;
 }
 
 #force-magnification-input {
@@ -249,26 +262,6 @@ body {
   }
 }
 
-#force-magnification-container {
-  position: absolute;
-  top: 0;
-  left: 1rem;
-
-  color: white;
-  opacity: 25%;
-
-  &:hover {
-    opacity: 37.5%;
-  }
-  &:active {
-    opacity: 50%;
-  }
-}
-
-#force-magnification-text {
-  justify-content: left;
-}
-
 #frame-prev-button {
   position: absolute;
   top: 1rem;
@@ -278,7 +271,7 @@ body {
 
 #frame-container {
   position: absolute;
-  top: 0;
+  top: 1rem;
   left: 50%;
   transform: translateX(-50%);
   height: 5rem;
@@ -294,12 +287,10 @@ body {
 #frame-value {
   display: flex;
   justify-content: center;
-  align-content: center;
 }
 
 #frame-value-fraction {
   font-size: 1rem;
-  dominant-baseline: text-bottom;
 }
 
 #frame-next-button {
@@ -315,6 +306,4 @@ body {
   bottom: 1rem;
   width: 9rem;
   height: 3rem;
-
-  font-size: 0.75rem;
 }

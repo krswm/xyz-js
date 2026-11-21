@@ -3,12 +3,16 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>XYZ Molecule Visualizer</title>
+    <meta name="application-name" content="XYZ Molecule Visualizer" />
     <meta
       name="description"
-      content="XYZ Molecule Visualizer • For visualizing inputs and outputs of MLIP"
+      content="For inspecting inputs and outputs of MLIPs"
     />
-    <title>XYZ Molecule Visualizer</title>
+
     <link rel="stylesheet" href="style.css" />
+
     <script type="importmap">
       {
         "imports": {
@@ -22,7 +26,7 @@
     <canvas id="canvas"></canvas>
 
     <label id="top-components">
-      <input id="file-input" type="file" accept="*" />
+      <input id="file-input" type="file" />
 
       <div id="title">XYZ Molecule Visualizer</div>
 
@@ -57,10 +61,7 @@
       <button id="frame-next-button">→</button>
 
       <a id="repo-link" href="https://github.com/krswm/xyz-js">
-        <div>
-          REPO ON GITHUB<br />
-          INFO & SOURCE
-        </div>
+        <div>REPO ON GITHUB</div>
       </a>
     </div>
 
