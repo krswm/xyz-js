@@ -1,4 +1,4 @@
-import { XyzReader } from "./xyz-reader.js";
+import { XyzReader, XyzReaderError } from "./xyz-reader.js";
 import { Visualizer } from "./visualizer.js";
 
 class App {
@@ -32,7 +32,14 @@ class App {
     reader.addEventListener("load", () => {
       const fileContent = reader.result;
       const xyzReader = new XyzReader(fileContent);
-      this.visualizer.changeMolecules(xyzReader.getMolecules());
+
+      try {
+        this.visualizer.changeMolecules(xyzReader.getMolecules());
+      } catch (error) {
+        if (error instanceof XyzReaderError) {
+          alert(`Error: malformed XYZ file\n${error.message}`);
+        }
+      }
     });
 
     reader.readAsText(file);

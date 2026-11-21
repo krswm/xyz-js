@@ -1,5 +1,3 @@
-// TODO: Empty file
-
 class Molecule {
   constructor(atoms, energy) {
     this.atoms = atoms;
@@ -15,51 +13,60 @@ class Atom {
   }
 }
 
+export class XyzReaderError extends Error {}
+
 export class XyzReader {
   // I referred to this specification of the XYZ and Extended XYZ format:
   // https://www.ovito.org/docs/current/reference/file_formats/input/xyz.html
 
-  constructor(xyzFileContent) {
-    console.log("%c%s", "font-family: monospace;", xyzFileContent);
+  constructor(fileContent) {
+    console.log("%c%s", "font-family: ui-monospace;", fileContent);
 
-    this.lines = xyzFileContent.split("\n");
-    this.lines.pop(); // Remove the blank line at the end.
+    this.lines = fileContent.split(/\n|\r\n/);
+
+    const trailingLine = this.lines.pop();
+    if (trailingLine !== "") {
+      this.lines.push(trailingLine);
+    }
 
     this.lineIndex = 0;
   }
 
   getMolecules() {
     const molecules = [];
-
     while (this.lineIndex < this.lines.length) {
       molecules.push(this.getNextMolecule());
     }
-
     console.log(molecules);
     return molecules;
   }
 
   getNextMolecule() {
-    const numAtoms = Number(this.lines[this.lineIndex++]);
-    const metadata = this.toMetadata(this.lines[this.lineIndex++]);
+    const numAtoms = Number(this.getNextLine());
+    if (!(Number.isInteger(numAtoms) && numAtoms >= 0)) {
+      throw new XyzReaderError("invalid numAtoms");
+    }
+
+    const metadata = this.toMetadata(this.getNextLine());
     const properties = this.toProperties(metadata);
 
     const atoms = [];
-
     for (let i = 0; i < numAtoms; i++) {
-      const line = this.lines[this.lineIndex++];
-
-      const isExtendedXyz = properties !== undefined;
-      if (isExtendedXyz) {
-        atoms.push(this.toAtomExtendedXyz(line, properties));
-      } else {
-        atoms.push(this.toAtomXyz(line));
-      }
+      const atom = this.toAtom(this.getNextLine(), properties);
+      atoms.push(atom);
     }
 
-    const energy = Number(metadata.energy) || undefined;
+    const energy =
+      metadata.energy === undefined ? undefined : Number(metadata.energy);
 
-    return new Molecule(atoms, energy);
+    return { atoms, energy };
+  }
+
+  getNextLine() {
+    if (this.lineIndex == this.lines.length) {
+      throw new XyzReaderError("unexpected end of file");
+    }
+    return this.lines[this.lineIndex++];
   }
 
   toMetadata(line) {
@@ -68,7 +75,6 @@ export class XyzReader {
     );
 
     const metadata = {};
-
     for (const match of matches) {
       const key = match[1];
       let value = match[2];
@@ -80,35 +86,40 @@ export class XyzReader {
 
       metadata[key] = value;
     }
-
     return metadata;
   }
 
   toProperties(metadata) {
     const text = metadata["Properties"];
     if (text === undefined) {
-      return undefined;
+      // Default to the non-Extended XYZ format.
+      return [
+        { name: "species", type: "S", numColumns: 1 },
+        { name: "pos", type: "R", numColumns: 3 },
+      ];
     }
 
     const splits = text.split(":");
 
     const properties = [];
-
     let i = 0;
     while (i < splits.length) {
-      const property = {
-        name: splits[i++],
-        type: splits[i++],
-        num: Number(splits[i++]),
-      };
+      const name = splits[i++];
+      const type = splits[i++];
+      const numColumns = Number(splits[i++]);
+
+      if (!(Number.isInteger(numColumns) && numColumns >= 0)) {
+        throw new XyzReaderError("invalid numColumns");
+      }
+
+      const property = { name, type, numColumns };
 
       properties.push(property);
     }
-
     return properties;
   }
 
-  toAtomExtendedXyz(line, properties) {
+  toAtom(line, properties) {
     const splits = line.split(/\s+/);
 
     const data = {};
@@ -117,7 +128,7 @@ export class XyzReader {
     for (const property of properties) {
       const values = [];
 
-      for (let i = 0; i < property.num; i++) {
+      for (let i = 0; i < property.numColumns; i++) {
         const value = splits[splitIndex++];
 
         switch (property.type) {
@@ -139,14 +150,6 @@ export class XyzReader {
     const pos = data.pos;
     const forces = data.forces || data.MACE_forces;
 
-    return new Atom(species, pos, forces);
-  }
-
-  toAtomXyz(line) {
-    const [species, x, y, z] = line.trim().split(/\s+/);
-    const pos = [x, y, z];
-    const forces = undefined;
-
-    return new Atom(species, pos);
+    return { species, pos, forces };
   }
 }
