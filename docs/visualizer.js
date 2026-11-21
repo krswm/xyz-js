@@ -55,12 +55,13 @@ export class Visualizer {
         this.incrementFrame();
       });
     window.addEventListener("keydown", (event) => {
-      event.preventDefault();
       switch (event.key) {
         case "ArrowLeft":
+          event.preventDefault();
           this.decrementFrame();
           break;
         case "ArrowRight":
+          event.preventDefault();
           this.incrementFrame();
           break;
       }
@@ -274,6 +275,10 @@ export class Visualizer {
 
     const innerSphere = new THREE.Mesh(geometry, material);
     innerSphere.position.set(...pos);
+
+    // To make the species text direct correctly even at the moment immediately
+    // after a frame change, I need `up` here as well.
+    innerSphere.up = this.camera.up;
 
     this.innerSpheres.push(innerSphere);
 
