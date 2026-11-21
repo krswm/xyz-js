@@ -9,7 +9,7 @@ export class XyzReader {
 
     this.lines = fileContent.split(/\n|\r\n/);
 
-    while (true) {
+    while (this.lines.length >= 1) {
       const lastLine = this.lines.pop();
       if (lastLine !== "") {
         this.lines.push(lastLine);
