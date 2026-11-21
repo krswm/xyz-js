@@ -9,9 +9,12 @@ export class XyzReader {
 
     this.lines = fileContent.split(/\n|\r\n/);
 
-    const trailingLine = this.lines.pop();
-    if (trailingLine !== "") {
-      this.lines.push(trailingLine);
+    while (true) {
+      const lastLine = this.lines.pop();
+      if (lastLine !== "") {
+        this.lines.push(lastLine);
+        break;
+      }
     }
 
     this.lineIndex = 0;
