@@ -139,7 +139,7 @@ export class XyzReader {
 
     const dataSpecies = data.species || [];
     const dataPos = data.pos || [];
-    const dataForces = data.forces || data.MACE_forces || data.force || [];
+    const dataForces = data.forces || data.force || data.MACE_forces || [];
 
     const species =
       typeof dataSpecies[0] === "string" && dataSpecies.length === 1

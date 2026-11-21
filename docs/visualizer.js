@@ -163,9 +163,6 @@ export class Visualizer {
     const outerSphereGroup = new THREE.Group();
 
     for (const atom of molecule.atoms) {
-      if (atom.species === undefined) {
-        continue;
-      }
       if (atom.pos === undefined) {
         continue;
       }
@@ -202,7 +199,7 @@ export class Visualizer {
         atom.pos,
         color,
         textColor,
-        atom.species,
+        atom.species === undefined ? "" : atom.species,
       );
       innerSphereGroup.add(innerSphere);
 
