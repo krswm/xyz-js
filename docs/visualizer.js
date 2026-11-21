@@ -30,7 +30,7 @@ export class Visualizer {
     this.controls = new ArcballControls(this.camera, this.canvas);
     this.controls.update();
 
-    this.molecules = undefined;
+    this.molecules = [];
     this.prevMoleculeIndex = undefined;
 
     this.renderer.setAnimationLoop((time) => {
@@ -58,7 +58,7 @@ export class Visualizer {
         this.updateHTMLTexts();
       });
 
-    this.forceMagnification = 1.0;
+    this.forceMagnification = 10.0;
     document
       .getElementById("force-magnification-input")
       .addEventListener("input", (event) => {
@@ -66,18 +66,18 @@ export class Visualizer {
       });
 
     this.innerSpheres = [];
-    this.forceLineGeometries = [];
+    this.forceLines = [];
     this.groups = [];
     this.disposables = [];
   }
 
   updateHTMLTexts() {
-    const emDash = "—";
-    const hyphenMinus = "-";
-    const minusSign = "−";
+    const emDash = "\u2014";
+    const hyphenMinus = "\u002d";
+    const minusSign = "\u2212";
 
     const moleculeFrame =
-      this.molecules === undefined
+      this.molecules.length === 0
         ? emDash
         : `<span>${this.moleculeIndex + 1}<span id="frame-value-fraction">/${this.molecules.length}</span></span>`;
     // Enclose with <span>
@@ -86,7 +86,7 @@ export class Visualizer {
     document.getElementById("frame-value").innerHTML = moleculeFrame;
 
     const energy =
-      this.molecules === undefined ||
+      this.molecules.length === 0 ||
       this.molecules[this.moleculeIndex].energy === undefined
         ? emDash
         : `${this.molecules[this.moleculeIndex].energy.toFixed(6).replaceAll(hyphenMinus, minusSign)}`;
@@ -99,7 +99,7 @@ export class Visualizer {
     this.updateHTMLTexts();
   }
 
-  render(time) {
+  render() {
     const width = Math.floor(window.innerWidth * window.devicePixelRatio);
     const height = Math.floor(window.innerHeight * window.devicePixelRatio);
     if (this.canvas.width !== width || this.canvas.height !== height) {
@@ -110,10 +110,23 @@ export class Visualizer {
 
     if (this.moleculeIndex !== this.prevMoleculeIndex) {
       this.prevMoleculeIndex = this.moleculeIndex;
-      if (this.molecules !== undefined && this.molecules.length >= 1) {
+      this.removePrevMolecule();
+      if (this.molecules.length >= 1) {
         const molecule = this.molecules[this.moleculeIndex];
-        this.renderMolecule(molecule);
+        this.drawMolecule(molecule);
       }
+    }
+
+    for (const { geometry, forces } of this.forceLines) {
+      const [fx, fy, fz] = forces;
+      geometry.setFromPoints([
+        new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(
+          this.forceMagnification * fx,
+          this.forceMagnification * fy,
+          this.forceMagnification * fz,
+        ),
+      ]);
     }
 
     for (const innerSphere of this.innerSpheres) {
@@ -121,49 +134,12 @@ export class Visualizer {
       innerSphere.up = this.camera.up;
     }
 
-    if (this.molecules !== undefined && this.molecules.length >= 1) {
-      for (
-        let i = 0;
-        i < this.molecules[this.moleculeIndex].atoms.length;
-        i++
-      ) {
-        const atom = this.molecules[this.moleculeIndex].atoms[i];
-
-        if (atom.pos === undefined) {
-          continue;
-        }
-        const [x, y, z] = atom.pos;
-
-        if (atom.forces === undefined) {
-          continue;
-        }
-        const [fx, fy, fz] = atom.forces;
-
-        const line = this.forceLineGeometries[i];
-
-        line.setFromPoints([
-          new THREE.Vector3(0, 0, 0),
-          new THREE.Vector3(
-            this.forceMagnification * fx,
-            this.forceMagnification * fy,
-            this.forceMagnification * fz,
-          ),
-        ]);
-      }
-    }
-
-    this.controls.update();
     this.renderer.render(this.scene, this.camera);
-  }
-
-  renderMolecule(molecule) {
-    this.removePrevMolecule();
-    this.drawMolecule(molecule);
   }
 
   removePrevMolecule() {
     this.innerSpheres.length = 0;
-    this.forceLineGeometries.length = 0;
+    this.forceLines.length = 0;
 
     for (const group of this.groups) {
       this.scene.remove(group);
@@ -224,75 +200,20 @@ export class Visualizer {
       );
       innerSphereGroup.add(innerSphere);
 
-      const [x, y, z] = atom.pos;
-
-      {
-        const outerSphereGeometry = new THREE.SphereGeometry(radius, 32, 16);
-
-        const outerSphereDepthMaterial = new THREE.MeshPhongMaterial({
-          colorWrite: false,
-          transparent: true,
-        });
-        const outerSphereDepth = new THREE.Mesh(
-          outerSphereGeometry,
-          outerSphereDepthMaterial,
-        );
-        outerSphereDepth.position.set(x, y, z);
-
-        const outerSphereMaterial = new THREE.MeshPhongMaterial({
-          color,
-          transparent: true,
-          opacity: 0.5,
-        });
-        const outerSphere = new THREE.Mesh(
-          outerSphereGeometry,
-          outerSphereMaterial,
-        );
-        outerSphere.position.set(x, y, z);
-
-        this.disposables.push(outerSphereGeometry);
-        this.disposables.push(outerSphereDepthMaterial);
-        this.disposables.push(outerSphereDepth);
-        this.disposables.push(outerSphereMaterial);
-
-        outerSphereDepthGroup.add(outerSphereDepth);
-        outerSphereGroup.add(outerSphere);
-      }
+      const [outerSphereDepth, outerSphere] = this.getOuterSphere(
+        atom.pos,
+        color,
+        radius,
+      );
+      outerSphereDepthGroup.add(outerSphereDepth);
+      outerSphereGroup.add(outerSphere);
 
       if (atom.forces === undefined) {
         continue;
       }
 
-      const [fx, fy, fz] = atom.forces;
-
-      {
-        const forceLineGeometry = new LineGeometry();
-
-        forceLineGeometry.setFromPoints([
-          new THREE.Vector3(0, 0, 0),
-          new THREE.Vector3(
-            this.forceMagnification * fx,
-            this.forceMagnification * fy,
-            this.forceMagnification * fz,
-          ),
-        ]);
-
-        const forceLineMaterial = new LineMaterial({
-          linewidth: 1 / 16,
-          color,
-          worldUnits: true,
-        });
-
-        const forceLine = new Line2(forceLineGeometry, forceLineMaterial);
-        forceLine.position.set(x, y, z);
-
-        this.disposables.push(forceLineGeometry);
-        this.disposables.push(forceLineMaterial);
-
-        this.forceLineGeometries.push(forceLineGeometry);
-
-        forceLineGroup.add(forceLine);
-      }
+      const forceLine = this.getForceLine(atom.pos, color, atom.forces);
+      forceLineGroup.add(forceLine);
     }
 
     this.scene.add(forceLineGroup);
@@ -335,5 +256,48 @@ export class Visualizer {
     this.innerSpheres.push(innerSphere);
 
     return innerSphere;
+  }
+
+  getOuterSphere(pos, color, radius) {
+    const geometry = new THREE.SphereGeometry(radius, 32, 16);
+    const depthMaterial = new THREE.MeshPhongMaterial({
+      colorWrite: false,
+    });
+    const material = new THREE.MeshPhongMaterial({
+      color,
+      transparent: true,
+      opacity: 0.5,
+    });
+
+    this.disposables.push(geometry);
+    this.disposables.push(depthMaterial);
+    this.disposables.push(material);
+
+    const outerSphereDepth = new THREE.Mesh(geometry, depthMaterial);
+    const outerSphere = new THREE.Mesh(geometry, material);
+
+    outerSphereDepth.position.set(...pos);
+    outerSphere.position.set(...pos);
+
+    return [outerSphereDepth, outerSphere];
+  }
+
+  getForceLine(pos, color, forces) {
+    const geometry = new LineGeometry();
+    const material = new LineMaterial({
+      color,
+      worldUnits: true,
+      linewidth: 1 / 16,
+    });
+
+    this.disposables.push(geometry);
+    this.disposables.push(material);
+
+    const forceLine = new Line2(geometry, material);
+    forceLine.position.set(...pos);
+
+    this.forceLines.push({ geometry, forces });
+
+    return forceLine;
   }
 }
