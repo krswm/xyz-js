@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { TrackballControls } from "three/addons/controls/TrackballControls.js";
+import { ArcballControls } from "three/addons/controls/ArcballControls.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { Line2 } from "three/addons/lines/Line2.js";
 import { LineGeometry } from "three/addons/lines/LineGeometry.js";
@@ -26,12 +27,11 @@ export class Visualizer {
     this.camera.aspect = this.canvas.clientWidth / this.canvas.clientHeight;
     this.camera.position.set(0, 0, 16);
 
-    this.controls = new TrackballControls(this.camera, this.canvas);
+    this.controls = new ArcballControls(this.camera, this.canvas);
     this.controls.update();
 
     this.molecules = undefined;
     this.prevMoleculeIndex = undefined;
-    this.removableObjects = [];
 
     this.renderer.setAnimationLoop((time) => {
       this.render(time);
@@ -58,20 +58,17 @@ export class Visualizer {
         this.updateHTMLTexts();
       });
 
-    this.centerSpheres = [];
-
     this.forceMagnification = 1.0;
     document
       .getElementById("force-magnification-input")
       .addEventListener("input", (event) => {
-        console.log(event);
         this.forceMagnification = event.target.valueAsNumber;
-        console.log(this.forceMagnification);
       });
 
-    this.count = 0;
-
-    this.lineGeometries = [];
+    this.innerSpheres = [];
+    this.forceLineGeometries = [];
+    this.groups = [];
+    this.disposables = [];
   }
 
   updateHTMLTexts() {
@@ -114,13 +111,14 @@ export class Visualizer {
     if (this.moleculeIndex !== this.prevMoleculeIndex) {
       this.prevMoleculeIndex = this.moleculeIndex;
       if (this.molecules !== undefined && this.molecules.length >= 1) {
-        this.renderRemovableObjects(this.moleculeIndex);
+        const molecule = this.molecules[this.moleculeIndex];
+        this.renderMolecule(molecule);
       }
     }
 
-    for (const centerSphere of this.centerSpheres) {
-      centerSphere.lookAt(this.camera.position);
-      centerSphere.up = this.camera.up;
+    for (const innerSphere of this.innerSpheres) {
+      innerSphere.lookAt(this.camera.position);
+      innerSphere.up = this.camera.up;
     }
 
     if (this.molecules !== undefined && this.molecules.length >= 1) {
@@ -141,17 +139,14 @@ export class Visualizer {
         }
         const [fx, fy, fz] = atom.forces;
 
-        const line = this.lineGeometries[i];
-        if (this.count++ < 100) {
-          console.log(this.lineGeometries);
-        }
+        const line = this.forceLineGeometries[i];
 
         line.setFromPoints([
-          new THREE.Vector3(x, y, z),
+          new THREE.Vector3(0, 0, 0),
           new THREE.Vector3(
-            x + this.forceMagnification * fx,
-            y + this.forceMagnification * fy,
-            z + this.forceMagnification * fz,
+            this.forceMagnification * fx,
+            this.forceMagnification * fy,
+            this.forceMagnification * fz,
           ),
         ]);
       }
@@ -161,141 +156,184 @@ export class Visualizer {
     this.renderer.render(this.scene, this.camera);
   }
 
-  renderRemovableObjects(moleculeIndex) {
-    console.log(
-      `render molecule frame ${moleculeIndex}/${this.molecules.length}`,
-    );
+  renderMolecule(molecule) {
+    this.removePrevMolecule();
+    this.drawMolecule(molecule);
+  }
 
-    const molecule = this.molecules[moleculeIndex];
+  removePrevMolecule() {
+    this.innerSpheres.length = 0;
+    this.forceLineGeometries.length = 0;
 
-    for (const removableObject of this.removableObjects) {
-      this.scene.remove(removableObject);
+    for (const group of this.groups) {
+      this.scene.remove(group);
     }
 
-    const centerSpheres = new THREE.Group();
-    const forceVectorLines = new THREE.Group();
-    const ghostAtomSpheres = new THREE.Group();
-    const atomSpheres = new THREE.Group();
+    for (const disposable of this.disposables) {
+      disposable.dispose();
+    }
+  }
+
+  drawMolecule(molecule) {
+    const innerSphereGroup = new THREE.Group();
+    const forceLineGroup = new THREE.Group();
+    const outerSphereDepthGroup = new THREE.Group();
+    const outerSphereGroup = new THREE.Group();
 
     for (const atom of molecule.atoms) {
       if (atom.species === undefined) {
         continue;
       }
+      if (atom.pos === undefined) {
+        continue;
+      }
 
       // `radius` is an approximate Van der Waals radius.
-      const { radius, color, symbolColor } = {
+      const { radius, color, textColor } = {
         H: {
           radius: 1.1,
           color: "#FFFFFF", // oklch(1.0 0.0 0) (white)
-          symbolColor: "#AEAEAE", // oklch(0.75 0.0 0)
+          textColor: "#AEAEAE", // oklch(0.75 0.0 0)
         },
         C: {
           radius: 1.7,
           color: "#636363", // oklch(0.5 0.0 0) (gray)
-          symbolColor: "#222222", // oklch(0.25 0.0 0)
+          textColor: "#222222", // oklch(0.25 0.0 0)
         },
         N: {
           radius: 1.6,
           color: "#95ABEE", // oklch(0.75 0.1 270) (blue)
-          symbolColor: "#4D5F9C", // oklch(0.5 0.1 270)
+          textColor: "#4D5F9C", // oklch(0.5 0.1 270)
         },
         O: {
           radius: 1.5,
           color: "#E69688", // oklch(0.75 0.1 30) (red)
-          symbolColor: "#944B40", // oklch(0.5 0.1 30)
+          textColor: "#944B40", // oklch(0.5 0.1 30)
         },
       }[atom.species] || {
         radius: 1.5,
         color: "#7FC08C", // oklch(0.75 0.1 150) (green)
-        symbolColor: "#337344", // oklch(0.5 0.1 150)
+        textColor: "#337344", // oklch(0.5 0.1 150)
       };
 
-      if (atom.pos === undefined) {
-        continue;
-      }
+      const innerSphere = this.getInnerSphere(
+        atom.pos,
+        color,
+        textColor,
+        atom.species,
+      );
+      innerSphereGroup.add(innerSphere);
+
       const [x, y, z] = atom.pos;
 
       {
-        const ctx = document.createElement("canvas").getContext("2d");
-        ctx.canvas.width = 128;
-        ctx.canvas.height = 64;
-        ctx.fillStyle = color;
-        ctx.fillRect(0, 0, 128, 64);
-        ctx.textBaseline = "middle";
-        ctx.textAlign = "center";
-        ctx.font = "bold 32px system-ui";
-        ctx.fillStyle = symbolColor;
-        const text = atom.species;
-        ctx.fillText(text, 32, 32);
+        const outerSphereGeometry = new THREE.SphereGeometry(radius, 32, 16);
 
-        const canvas = ctx.canvas;
-
-        const texture = new THREE.CanvasTexture(canvas);
-
-        const centerSphere = new THREE.Mesh(
-          new THREE.SphereGeometry(1 / 4, 32, 16),
-          new THREE.MeshPhongMaterial({ map: texture }),
-          // yes! transparent object inside transparent object
+        const outerSphereDepthMaterial = new THREE.MeshPhongMaterial({
+          colorWrite: false,
+          transparent: true,
+        });
+        const outerSphereDepth = new THREE.Mesh(
+          outerSphereGeometry,
+          outerSphereDepthMaterial,
         );
-        centerSphere.position.set(x, y, z);
-        centerSpheres.add(centerSphere);
-        this.centerSpheres.push(centerSphere);
-      }
+        outerSphereDepth.position.set(x, y, z);
 
-      const ghostAtomSphere = new THREE.Mesh(
-        new THREE.SphereGeometry(radius, 32, 16),
-        new THREE.MeshPhongMaterial({ colorWrite: false, transparent: true }),
-      );
-      ghostAtomSphere.position.set(x, y, z);
-      ghostAtomSpheres.add(ghostAtomSphere);
-
-      const atomSphere = new THREE.Mesh(
-        new THREE.SphereGeometry(radius, 32, 16),
-        new THREE.MeshPhongMaterial({
+        const outerSphereMaterial = new THREE.MeshPhongMaterial({
           color,
           transparent: true,
           opacity: 0.5,
-        }),
-      );
-      atomSphere.position.set(x, y, z);
-      atomSpheres.add(atomSphere);
+        });
+        const outerSphere = new THREE.Mesh(
+          outerSphereGeometry,
+          outerSphereMaterial,
+        );
+        outerSphere.position.set(x, y, z);
+
+        this.disposables.push(outerSphereGeometry);
+        this.disposables.push(outerSphereDepthMaterial);
+        this.disposables.push(outerSphereDepth);
+        this.disposables.push(outerSphereMaterial);
+
+        outerSphereDepthGroup.add(outerSphereDepth);
+        outerSphereGroup.add(outerSphere);
+      }
 
       if (atom.forces === undefined) {
         continue;
       }
+
       const [fx, fy, fz] = atom.forces;
 
-      const lineGeometry = new LineGeometry();
+      {
+        const forceLineGeometry = new LineGeometry();
 
-      lineGeometry.setFromPoints([
-        new THREE.Vector3(x, y, z),
-        new THREE.Vector3(
-          x + this.forceMagnification * fx,
-          y + this.forceMagnification * fy,
-          z + this.forceMagnification * fz,
-        ),
-      ]);
+        forceLineGeometry.setFromPoints([
+          new THREE.Vector3(0, 0, 0),
+          new THREE.Vector3(
+            this.forceMagnification * fx,
+            this.forceMagnification * fy,
+            this.forceMagnification * fz,
+          ),
+        ]);
 
-      const line = new Line2(
-        lineGeometry,
-        new LineMaterial({
+        const forceLineMaterial = new LineMaterial({
           linewidth: 1 / 16,
           color,
           worldUnits: true,
-        }),
-      );
-      forceVectorLines.add(line);
-      this.lineGeometries.push(lineGeometry);
+        });
+
+        const forceLine = new Line2(forceLineGeometry, forceLineMaterial);
+        forceLine.position.set(x, y, z);
+
+        this.disposables.push(forceLineGeometry);
+        this.disposables.push(forceLineMaterial);
+
+        this.forceLineGeometries.push(forceLineGeometry);
+
+        forceLineGroup.add(forceLine);
+      }
     }
 
-    this.scene.add(centerSpheres);
-    this.scene.add(forceVectorLines);
-    this.scene.add(ghostAtomSpheres);
-    this.scene.add(atomSpheres);
+    this.scene.add(forceLineGroup);
+    this.scene.add(innerSphereGroup);
+    this.scene.add(outerSphereDepthGroup);
+    this.scene.add(outerSphereGroup);
 
-    this.removableObjects.push(centerSpheres);
-    this.removableObjects.push(forceVectorLines);
-    this.removableObjects.push(ghostAtomSpheres);
-    this.removableObjects.push(atomSpheres);
+    this.groups.push(forceLineGroup);
+    this.groups.push(innerSphereGroup);
+    this.groups.push(outerSphereDepthGroup);
+    this.groups.push(outerSphereGroup);
+  }
+
+  getInnerSphere(pos, color, textColor, species) {
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+    context.canvas.width = 128;
+    context.canvas.height = 64;
+
+    context.fillStyle = color;
+    context.fillRect(0, 0, 128, 64);
+
+    context.font = "bold 32px system-ui";
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    context.fillStyle = textColor;
+    context.fillText(species, 32, 32);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    const geometry = new THREE.SphereGeometry(1 / 4, 32, 16);
+    const material = new THREE.MeshPhongMaterial({ map: texture });
+
+    this.disposables.push(texture);
+    this.disposables.push(geometry);
+    this.disposables.push(material);
+
+    const innerSphere = new THREE.Mesh(geometry, material);
+    innerSphere.position.set(...pos);
+
+    this.innerSpheres.push(innerSphere);
+
+    return innerSphere;
   }
 }
