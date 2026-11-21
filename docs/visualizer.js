@@ -34,7 +34,7 @@ export class Visualizer {
     this.disposables = [];
 
     this.molecules = [];
-    this.prevMoleculeIndex = undefined;
+    this.prevFrame = undefined;
 
     this.forceMagnification = 16;
     document
@@ -43,31 +43,28 @@ export class Visualizer {
         this.forceMagnification = event.target.valueAsNumber;
       });
 
-    this.moleculeIndex = 0;
+    this.frame = 0;
     document
       .getElementById("frame-prev-button")
       .addEventListener("click", () => {
-        if (this.molecules.length >= 1) {
-          this.moleculeIndex--;
-          if (this.moleculeIndex < 0) {
-            this.moleculeIndex = this.molecules.length - 1;
-          }
-
-          this.updateText();
-        }
+        this.decrementFrame();
       });
     document
       .getElementById("frame-next-button")
       .addEventListener("click", () => {
-        if (this.molecules.length >= 1) {
-          this.moleculeIndex++;
-          if (this.moleculeIndex >= this.molecules.length) {
-            this.moleculeIndex = 0;
-          }
-
-          this.updateText();
-        }
+        this.incrementFrame();
       });
+    window.addEventListener("keydown", (event) => {
+      event.preventDefault();
+      switch (event.key) {
+        case "ArrowLeft":
+          this.decrementFrame();
+          break;
+        case "ArrowRight":
+          this.incrementFrame();
+          break;
+      }
+    });
 
     this.updateText();
     this.renderer.setAnimationLoop(() => {
@@ -77,9 +74,31 @@ export class Visualizer {
 
   changeMolecules(molecules) {
     this.molecules = molecules;
-    this.prevMoleculeIndex = undefined;
-    this.moleculeIndex = 0;
+    this.prevFrame = undefined;
+    this.frame = 0;
     this.updateText();
+  }
+
+  decrementFrame() {
+    if (this.molecules.length >= 1) {
+      this.frame--;
+      if (this.frame < 0) {
+        this.frame = this.molecules.length - 1;
+      }
+
+      this.updateText();
+    }
+  }
+
+  incrementFrame() {
+    if (this.molecules.length >= 1) {
+      this.frame++;
+      if (this.frame >= this.molecules.length) {
+        this.frame = 0;
+      }
+
+      this.updateText();
+    }
   }
 
   updateText() {
@@ -91,15 +110,15 @@ export class Visualizer {
       this.molecules.length === 0
         ? emDash
         : "<span>" +
-          `${this.moleculeIndex + 1}` +
+          `${this.frame + 1}` +
           `<span id="frame-value-fraction">/${this.molecules.length}</span>` +
           "</span>";
 
     document.getElementById("energy-value").innerText =
       this.molecules.length === 0 ||
-      this.molecules[this.moleculeIndex].energy === undefined
+      this.molecules[this.frame].energy === undefined
         ? emDash
-        : this.molecules[this.moleculeIndex].energy
+        : this.molecules[this.frame].energy
             .toFixed(6)
             .replaceAll(hyphenMinus, minusSign);
   }
@@ -113,11 +132,11 @@ export class Visualizer {
       this.camera.updateProjectionMatrix();
     }
 
-    if (this.moleculeIndex !== this.prevMoleculeIndex) {
-      this.prevMoleculeIndex = this.moleculeIndex;
+    if (this.frame !== this.prevFrame) {
+      this.prevFrame = this.frame;
       this.removePrevMolecule();
       if (this.molecules.length >= 1) {
-        const molecule = this.molecules[this.moleculeIndex];
+        const molecule = this.molecules[this.frame];
         this.drawMolecule(molecule);
       }
     }
