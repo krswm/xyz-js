@@ -5,7 +5,7 @@ export class XyzReaderError extends Error {}
 
 export class XyzReader {
   constructor(fileContent) {
-    console.log("%c%s", "font-family: ui-monospace;", fileContent);
+    console.log("%c%s", "font-family: monospace;", fileContent);
 
     this.lines = fileContent.split(/\n|\r\n/);
 
