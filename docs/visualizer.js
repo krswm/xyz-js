@@ -1,10 +1,11 @@
 import * as THREE from "three";
 import { TrackballControls } from "three/addons/controls/TrackballControls.js";
-import { ArcballControls } from "three/addons/controls/ArcballControls.js";
-import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { Line2 } from "three/addons/lines/Line2.js";
 import { LineGeometry } from "three/addons/lines/LineGeometry.js";
 import { LineMaterial } from "three/addons/lines/LineMaterial.js";
+
+// To prevent transparency artifacts, I used `sortObjects = false` and
+// `outerSphereDepth`.
 
 export class Visualizer {
   constructor() {
@@ -20,83 +21,87 @@ export class Visualizer {
     this.scene.add(directionalLight);
 
     this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas });
-    this.renderer.setSize(window.innerWidth, window.innerHeight, false);
     this.renderer.sortObjects = false;
 
     this.camera = new THREE.PerspectiveCamera();
-    this.camera.aspect = this.canvas.clientWidth / this.canvas.clientHeight;
     this.camera.position.set(0, 0, 16);
 
-    this.controls = new ArcballControls(this.camera, this.canvas);
-    this.controls.update();
+    this.controls = new TrackballControls(this.camera, this.canvas);
+
+    this.forceLines = [];
+    this.innerSpheres = [];
+    this.groups = [];
+    this.disposables = [];
 
     this.molecules = [];
     this.prevMoleculeIndex = undefined;
 
-    this.renderer.setAnimationLoop((time) => {
-      this.render(time);
-    });
-
-    this.moleculeIndex = 0;
-    this.updateHTMLTexts();
-    document
-      .getElementById("frame-prev-button")
-      .addEventListener("click", () => {
-        this.moleculeIndex--;
-        if (this.moleculeIndex < 0) {
-          this.moleculeIndex = this.molecules.length - 1;
-        }
-        this.updateHTMLTexts();
-      });
-    document
-      .getElementById("frame-next-button")
-      .addEventListener("click", () => {
-        this.moleculeIndex++;
-        if (this.moleculeIndex >= this.molecules.length) {
-          this.moleculeIndex = 0;
-        }
-        this.updateHTMLTexts();
-      });
-
-    this.forceMagnification = 10.0;
+    this.forceMagnification = 16;
     document
       .getElementById("force-magnification-input")
       .addEventListener("input", (event) => {
         this.forceMagnification = event.target.valueAsNumber;
       });
 
-    this.innerSpheres = [];
-    this.forceLines = [];
-    this.groups = [];
-    this.disposables = [];
-  }
+    this.moleculeIndex = 0;
+    document
+      .getElementById("frame-prev-button")
+      .addEventListener("click", () => {
+        if (this.molecules.length >= 1) {
+          this.moleculeIndex--;
+          if (this.moleculeIndex < 0) {
+            this.moleculeIndex = this.molecules.length - 1;
+          }
 
-  updateHTMLTexts() {
-    const emDash = "\u2014";
-    const hyphenMinus = "\u002d";
-    const minusSign = "\u2212";
+          this.updateText();
+        }
+      });
+    document
+      .getElementById("frame-next-button")
+      .addEventListener("click", () => {
+        if (this.molecules.length >= 1) {
+          this.moleculeIndex++;
+          if (this.moleculeIndex >= this.molecules.length) {
+            this.moleculeIndex = 0;
+          }
 
-    const moleculeFrame =
-      this.molecules.length === 0
-        ? emDash
-        : `<span>${this.moleculeIndex + 1}<span id="frame-value-fraction">/${this.molecules.length}</span></span>`;
-    // Enclose with <span>
-    // because it's inside flex box
-    // and the fraction part will raised (visually wrong)!
-    document.getElementById("frame-value").innerHTML = moleculeFrame;
+          this.updateText();
+        }
+      });
 
-    const energy =
-      this.molecules.length === 0 ||
-      this.molecules[this.moleculeIndex].energy === undefined
-        ? emDash
-        : `${this.molecules[this.moleculeIndex].energy.toFixed(6).replaceAll(hyphenMinus, minusSign)}`;
-    document.getElementById("energy-value").innerText = energy;
+    this.updateText();
+    this.renderer.setAnimationLoop(() => {
+      this.render();
+    });
   }
 
   changeMolecules(molecules) {
     this.molecules = molecules;
     this.prevMoleculeIndex = undefined;
-    this.updateHTMLTexts();
+    this.moleculeIndex = 0;
+    this.updateText();
+  }
+
+  updateText() {
+    const emDash = "\u2014";
+    const hyphenMinus = "\u002d";
+    const minusSign = "\u2212";
+
+    document.getElementById("frame-value").innerHTML =
+      this.molecules.length === 0
+        ? emDash
+        : "<span>" +
+          `${this.moleculeIndex + 1}` +
+          `<span id="frame-value-fraction">/${this.molecules.length}</span>` +
+          "</span>";
+
+    document.getElementById("energy-value").innerText =
+      this.molecules.length === 0 ||
+      this.molecules[this.moleculeIndex].energy === undefined
+        ? emDash
+        : this.molecules[this.moleculeIndex].energy
+            .toFixed(6)
+            .replaceAll(hyphenMinus, minusSign);
   }
 
   render() {
@@ -134,12 +139,13 @@ export class Visualizer {
       innerSphere.up = this.camera.up;
     }
 
+    this.controls.update();
     this.renderer.render(this.scene, this.camera);
   }
 
   removePrevMolecule() {
-    this.innerSpheres.length = 0;
     this.forceLines.length = 0;
+    this.innerSpheres.length = 0;
 
     for (const group of this.groups) {
       this.scene.remove(group);
