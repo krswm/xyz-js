@@ -28,10 +28,11 @@ export class Visualizer {
 
     this.controls = new TrackballControls(this.camera, this.canvas);
 
+    this.species3dMemoizer = new Species3dMemoizer();
+
     this.forceLines = [];
     this.innerSpheres = [];
     this.groups = [];
-    this.disposables = [];
 
     this.molecules = [];
     this.prevFrame = undefined;
@@ -171,11 +172,6 @@ export class Visualizer {
       const group = this.groups.pop();
       this.scene.remove(group);
     }
-
-    while (this.disposables.length > 0) {
-      const disposable = this.disposables.pop();
-      disposable.dispose();
-    }
   }
 
   drawMolecule(molecule) {
@@ -189,47 +185,40 @@ export class Visualizer {
         continue;
       }
 
-      // `radius` is an approximate Van der Waals radius.
-      const { radius, color, textColor } = {
-        H: {
-          radius: 1.1,
-          color: "#FFFFFF", // oklch(1.0 0.0 0) (white)
-          textColor: "#AEAEAE", // oklch(0.75 0.0 0)
-        },
-        C: {
-          radius: 1.7,
-          color: "#636363", // oklch(0.5 0.0 0) (gray)
-          textColor: "#222222", // oklch(0.25 0.0 0)
-        },
-        N: {
-          radius: 1.6,
-          color: "#95ABEE", // oklch(0.75 0.1 270) (blue)
-          textColor: "#4D5F9C", // oklch(0.5 0.1 270)
-        },
-        O: {
-          radius: 1.5,
-          color: "#E69688", // oklch(0.75 0.1 30) (red)
-          textColor: "#944B40", // oklch(0.5 0.1 30)
-        },
-      }[atom.species] || {
-        radius: 1.5,
-        color: "#7FC08C", // oklch(0.75 0.1 150) (green)
-        textColor: "#337344", // oklch(0.5 0.1 150)
-      };
+      const {
+        innerSphereGeometry,
+        innerSphereMaterial,
+        outerSphereGeometry,
+        outerSphereDepthMaterial,
+        outerSphereMaterial,
+        forceLineMaterial,
+      } = this.species3dMemoizer.getSpecies3d(atom.species);
 
-      const innerSphere = this.getInnerSphere(
-        atom.pos,
-        color,
-        textColor,
-        atom.species === undefined ? "" : atom.species,
+      const innerSphere = new THREE.Mesh(
+        innerSphereGeometry,
+        innerSphereMaterial,
       );
+
+      // To make the species text direct correctly even at the moment
+      // immediately after a frame change, I need `up` here as well.
+      innerSphere.up = this.camera.up;
+
+      this.innerSpheres.push(innerSphere);
+
+      innerSphere.position.set(...atom.pos);
       innerSphereGroup.add(innerSphere);
 
-      const [outerSphereDepth, outerSphere] = this.getOuterSphere(
-        atom.pos,
-        color,
-        radius,
+      const outerSphereDepth = new THREE.Mesh(
+        outerSphereGeometry,
+        outerSphereDepthMaterial,
       );
+      const outerSphere = new THREE.Mesh(
+        outerSphereGeometry,
+        outerSphereMaterial,
+      );
+
+      outerSphereDepth.position.set(...atom.pos);
+      outerSphere.position.set(...atom.pos);
       outerSphereDepthGroup.add(outerSphereDepth);
       outerSphereGroup.add(outerSphere);
 
@@ -237,7 +226,16 @@ export class Visualizer {
         continue;
       }
 
-      const forceLine = this.getForceLine(atom.pos, color, atom.forces);
+      const forceLineGeometry = new LineGeometry();
+
+      const forceLine = new Line2(forceLineGeometry, forceLineMaterial);
+
+      this.forceLines.push({
+        geometry: forceLineGeometry,
+        forces: atom.forces,
+      });
+
+      forceLine.position.set(...atom.pos);
       forceLineGroup.add(forceLine);
     }
 
@@ -251,9 +249,50 @@ export class Visualizer {
     this.groups.push(outerSphereDepthGroup);
     this.groups.push(outerSphereGroup);
   }
+}
 
-  getInnerSphere(pos, color, textColor, species) {
+class Species3dMemoizer {
+  constructor() {
+    this.species3ds = {};
+  }
+
+  getSpecies3d(species) {
+    return this.species3ds[species] || this.memoizeSpecies3d(species);
+  }
+
+  memoizeSpecies3d(species) {
+    console.log(`Species3dMemoizer: ${species}`);
+
+    // `radius` is an approximate Van der Waals radius.
+    const { radius, color, textColor } = {
+      H: {
+        radius: 1.1,
+        color: "#FFFFFF", // oklch(1.0 0.0 0) (white)
+        textColor: "#AEAEAE", // oklch(0.75 0.0 0)
+      },
+      C: {
+        radius: 1.7,
+        color: "#636363", // oklch(0.5 0.0 0) (gray)
+        textColor: "#222222", // oklch(0.25 0.0 0)
+      },
+      N: {
+        radius: 1.6,
+        color: "#95ABEE", // oklch(0.75 0.1 270) (blue)
+        textColor: "#4D5F9C", // oklch(0.5 0.1 270)
+      },
+      O: {
+        radius: 1.5,
+        color: "#E69688", // oklch(0.75 0.1 30) (red)
+        textColor: "#944B40", // oklch(0.5 0.1 30)
+      },
+    }[species] || {
+      radius: 1.5,
+      color: "#7FC08C", // oklch(0.75 0.1 150) (green)
+      textColor: "#337344", // oklch(0.5 0.1 150)
+    };
+
     const canvas = document.createElement("canvas");
+
     const context = canvas.getContext("2d");
     context.canvas.width = 128;
     context.canvas.height = 64;
@@ -261,72 +300,44 @@ export class Visualizer {
     context.fillStyle = color;
     context.fillRect(0, 0, 128, 64);
 
-    context.font = "bold 32px system-ui";
-    context.textAlign = "center";
-    context.textBaseline = "middle";
-    context.fillStyle = textColor;
-    context.fillText(species, 32, 32);
+    if (species !== undefined) {
+      context.font = "bold 32px system-ui";
+      context.textAlign = "center";
+      context.textBaseline = "middle";
+      context.fillStyle = textColor;
+      context.fillText(species, 32, 32);
+    }
 
     const texture = new THREE.CanvasTexture(canvas);
-    const geometry = new THREE.SphereGeometry(1 / 4, 32, 16);
-    const material = new THREE.MeshPhongMaterial({ map: texture });
 
-    this.disposables.push(texture);
-    this.disposables.push(geometry);
-    this.disposables.push(material);
+    const innerSphereGeometry = new THREE.SphereGeometry(1 / 4, 32, 16);
+    const innerSphereMaterial = new THREE.MeshPhongMaterial({ map: texture });
 
-    const innerSphere = new THREE.Mesh(geometry, material);
-    innerSphere.position.set(...pos);
-
-    // To make the species text direct correctly even at the moment immediately
-    // after a frame change, I need `up` here as well.
-    innerSphere.up = this.camera.up;
-
-    this.innerSpheres.push(innerSphere);
-
-    return innerSphere;
-  }
-
-  getOuterSphere(pos, color, radius) {
-    const geometry = new THREE.SphereGeometry(radius, 32, 16);
-    const depthMaterial = new THREE.MeshPhongMaterial({
+    const outerSphereGeometry = new THREE.SphereGeometry(radius, 32, 16);
+    const outerSphereDepthMaterial = new THREE.MeshPhongMaterial({
       colorWrite: false,
     });
-    const material = new THREE.MeshPhongMaterial({
+    const outerSphereMaterial = new THREE.MeshPhongMaterial({
       color,
       transparent: true,
       opacity: 0.5,
     });
 
-    this.disposables.push(geometry);
-    this.disposables.push(depthMaterial);
-    this.disposables.push(material);
-
-    const outerSphereDepth = new THREE.Mesh(geometry, depthMaterial);
-    const outerSphere = new THREE.Mesh(geometry, material);
-
-    outerSphereDepth.position.set(...pos);
-    outerSphere.position.set(...pos);
-
-    return [outerSphereDepth, outerSphere];
-  }
-
-  getForceLine(pos, color, forces) {
-    const geometry = new LineGeometry();
-    const material = new LineMaterial({
+    const forceLineMaterial = new LineMaterial({
       color,
       worldUnits: true,
       linewidth: 1 / 16,
     });
 
-    this.disposables.push(geometry);
-    this.disposables.push(material);
-
-    const forceLine = new Line2(geometry, material);
-    forceLine.position.set(...pos);
-
-    this.forceLines.push({ geometry, forces });
-
-    return forceLine;
+    const species3d = {
+      innerSphereGeometry,
+      innerSphereMaterial,
+      outerSphereGeometry,
+      outerSphereDepthMaterial,
+      outerSphereMaterial,
+      forceLineMaterial,
+    };
+    this.species3ds[species] = species3d;
+    return species3d;
   }
 }
