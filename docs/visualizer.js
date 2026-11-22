@@ -29,10 +29,9 @@ export class Visualizer {
     this.controls = new TrackballControls(this.camera, this.canvas);
 
     this.species3dMemoizer = new Species3dMemoizer();
-
-    this.forceLines = [];
-    this.innerSpheres = [];
     this.group = undefined;
+    this.forceLineGeometries = [];
+    this.innerSpheres = [];
 
     this.molecules = [];
     this.prevFrame = undefined;
@@ -143,33 +142,18 @@ export class Visualizer {
       }
     }
 
-    for (const { geometry, forces } of this.forceLines) {
-      const [fx, fy, fz] = forces;
-      geometry.setFromPoints([
-        new THREE.Vector3(0, 0, 0),
-        new THREE.Vector3(
-          this.forceMagnification * fx,
-          this.forceMagnification * fy,
-          this.forceMagnification * fz,
-        ),
-      ]);
-    }
-
-    for (const innerSphere of this.innerSpheres) {
-      innerSphere.lookAt(this.camera.position);
-      innerSphere.up = this.camera.up;
-    }
-
+    this.updateForceLineGeometries();
+    this.directInnerSpheresToCamera();
     this.controls.update();
     this.renderer.render(this.scene, this.camera);
   }
 
   removePrevMolecule() {
-    this.forceLines.length = 0;
-    this.innerSpheres.length = 0;
-
     this.scene.remove(this.group);
     this.group = undefined;
+
+    this.forceLineGeometries.length = 0;
+    this.innerSpheres.length = 0;
   }
 
   drawMolecule(molecule) {
@@ -199,10 +183,6 @@ export class Visualizer {
       innerSphere.position.set(...atom.pos);
       innerSphereGroup.add(innerSphere);
 
-      // To make the species text direct correctly even at the moment
-      // immediately after a frame change, I need `up` here as well.
-      innerSphere.up = this.camera.up;
-
       this.innerSpheres.push(innerSphere);
 
       const outerSphereDepth = new THREE.Mesh(
@@ -228,11 +208,16 @@ export class Visualizer {
       forceLine.position.set(...atom.pos);
       forceLineGroup.add(forceLine);
 
-      this.forceLines.push({
-        geometry: forceLineGeometry,
+      this.forceLineGeometries.push({
+        forceLineGeometry,
         forces: atom.forces,
       });
     }
+
+    // Do these before adding the objects to the scene, to render the objects
+    // correctly even at the moment immediately after a frame change.
+    this.directInnerSpheresToCamera();
+    this.updateForceLineGeometries();
 
     this.group = new THREE.Group();
 
@@ -242,6 +227,27 @@ export class Visualizer {
     this.group.add(outerSphereGroup);
 
     this.scene.add(this.group);
+  }
+
+  updateForceLineGeometries() {
+    for (const { forceLineGeometry, forces } of this.forceLineGeometries) {
+      const [fx, fy, fz] = forces;
+      forceLineGeometry.setFromPoints([
+        new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(
+          this.forceMagnification * fx,
+          this.forceMagnification * fy,
+          this.forceMagnification * fz,
+        ),
+      ]);
+    }
+  }
+
+  directInnerSpheresToCamera() {
+    for (const innerSphere of this.innerSpheres) {
+      innerSphere.lookAt(this.camera.position);
+      innerSphere.up = this.camera.up;
+    }
   }
 }
 
