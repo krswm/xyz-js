@@ -1,8 +1,8 @@
 import * as THREE from "three";
 import { TrackballControls } from "three/addons/controls/TrackballControls.js";
-import { Line2 } from "three/addons/lines/Line2.js";
 import { LineGeometry } from "three/addons/lines/LineGeometry.js";
 import { LineMaterial } from "three/addons/lines/LineMaterial.js";
+import { Line2 } from "three/addons/lines/Line2.js";
 
 // To prevent transparency artifacts, I used `sortObjects = false` and
 // `outerSphereDepth`.
@@ -167,11 +167,13 @@ export class Visualizer {
     this.forceLines.length = 0;
     this.innerSpheres.length = 0;
 
-    for (const group of this.groups) {
+    while (this.groups.length > 0) {
+      const group = this.groups.pop();
       this.scene.remove(group);
     }
 
-    for (const disposable of this.disposables) {
+    while (this.disposables.length > 0) {
+      const disposable = this.disposables.pop();
       disposable.dispose();
     }
   }
