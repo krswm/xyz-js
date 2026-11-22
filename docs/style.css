@@ -34,16 +34,23 @@
  *
  * overflow
  * cursor
+ * -webkit-user-select
+ * -moz-user-select
  */
+
+* {
+  font-family: system-ui;
+
+  overflow: hidden;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+}
 
 body {
   margin: 0;
 
   background: black;
 
-  font-family: system-ui;
-
-  overflow: hidden;
   cursor: default;
 }
 
