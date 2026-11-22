@@ -228,7 +228,6 @@ body {
 }
 
 #force-magnification-input {
-  height: 2rem;
   width: 12rem;
   margin: 0;
 
@@ -281,7 +280,6 @@ body {
   top: 1rem;
   left: 50%;
   transform: translateX(-50%);
-  height: 5rem;
 
   color: white;
   opacity: 25%;
