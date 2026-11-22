@@ -32,7 +32,7 @@ export class Visualizer {
 
     this.forceLines = [];
     this.innerSpheres = [];
-    this.groups = [];
+    this.group = undefined;
 
     this.molecules = [];
     this.prevFrame = undefined;
@@ -168,15 +168,13 @@ export class Visualizer {
     this.forceLines.length = 0;
     this.innerSpheres.length = 0;
 
-    while (this.groups.length > 0) {
-      const group = this.groups.pop();
-      this.scene.remove(group);
-    }
+    this.scene.remove(this.group);
+    this.group = undefined;
   }
 
   drawMolecule(molecule) {
-    const innerSphereGroup = new THREE.Group();
     const forceLineGroup = new THREE.Group();
+    const innerSphereGroup = new THREE.Group();
     const outerSphereDepthGroup = new THREE.Group();
     const outerSphereGroup = new THREE.Group();
 
@@ -198,6 +196,8 @@ export class Visualizer {
         innerSphereGeometry,
         innerSphereMaterial,
       );
+      innerSphere.position.set(...atom.pos);
+      innerSphereGroup.add(innerSphere);
 
       // To make the species text direct correctly even at the moment
       // immediately after a frame change, I need `up` here as well.
@@ -205,21 +205,18 @@ export class Visualizer {
 
       this.innerSpheres.push(innerSphere);
 
-      innerSphere.position.set(...atom.pos);
-      innerSphereGroup.add(innerSphere);
-
       const outerSphereDepth = new THREE.Mesh(
         outerSphereGeometry,
         outerSphereDepthMaterial,
       );
+      outerSphereDepth.position.set(...atom.pos);
+      outerSphereDepthGroup.add(outerSphereDepth);
+
       const outerSphere = new THREE.Mesh(
         outerSphereGeometry,
         outerSphereMaterial,
       );
-
-      outerSphereDepth.position.set(...atom.pos);
       outerSphere.position.set(...atom.pos);
-      outerSphereDepthGroup.add(outerSphereDepth);
       outerSphereGroup.add(outerSphere);
 
       if (atom.forces === undefined) {
@@ -227,27 +224,24 @@ export class Visualizer {
       }
 
       const forceLineGeometry = new LineGeometry();
-
       const forceLine = new Line2(forceLineGeometry, forceLineMaterial);
+      forceLine.position.set(...atom.pos);
+      forceLineGroup.add(forceLine);
 
       this.forceLines.push({
         geometry: forceLineGeometry,
         forces: atom.forces,
       });
-
-      forceLine.position.set(...atom.pos);
-      forceLineGroup.add(forceLine);
     }
 
-    this.scene.add(forceLineGroup);
-    this.scene.add(innerSphereGroup);
-    this.scene.add(outerSphereDepthGroup);
-    this.scene.add(outerSphereGroup);
+    this.group = new THREE.Group();
 
-    this.groups.push(forceLineGroup);
-    this.groups.push(innerSphereGroup);
-    this.groups.push(outerSphereDepthGroup);
-    this.groups.push(outerSphereGroup);
+    this.group.add(forceLineGroup);
+    this.group.add(innerSphereGroup);
+    this.group.add(outerSphereDepthGroup);
+    this.group.add(outerSphereGroup);
+
+    this.scene.add(this.group);
   }
 }
 
@@ -261,34 +255,34 @@ class Species3dMemoizer {
   }
 
   memoizeSpecies3d(species) {
-    console.log(`Species3dMemoizer: ${species}`);
+    console.log(`memoize ${species}`);
 
     // `radius` is an approximate Van der Waals radius.
-    const { radius, color, textColor } = {
+    const { color, textColor, radius } = {
       H: {
-        radius: 1.1,
         color: "#FFFFFF", // oklch(1.0 0.0 0) (white)
         textColor: "#AEAEAE", // oklch(0.75 0.0 0)
+        radius: 1.1,
       },
       C: {
-        radius: 1.7,
         color: "#636363", // oklch(0.5 0.0 0) (gray)
         textColor: "#222222", // oklch(0.25 0.0 0)
+        radius: 1.7,
       },
       N: {
-        radius: 1.6,
         color: "#95ABEE", // oklch(0.75 0.1 270) (blue)
         textColor: "#4D5F9C", // oklch(0.5 0.1 270)
+        radius: 1.6,
       },
       O: {
-        radius: 1.5,
         color: "#E69688", // oklch(0.75 0.1 30) (red)
         textColor: "#944B40", // oklch(0.5 0.1 30)
+        radius: 1.5,
       },
     }[species] || {
-      radius: 1.5,
       color: "#7FC08C", // oklch(0.75 0.1 150) (green)
       textColor: "#337344", // oklch(0.5 0.1 150)
+      radius: 1.5,
     };
 
     const canvas = document.createElement("canvas");
@@ -320,7 +314,7 @@ class Species3dMemoizer {
     const outerSphereMaterial = new THREE.MeshPhongMaterial({
       color,
       transparent: true,
-      opacity: 0.5,
+      opacity: 1 / 2,
     });
 
     const forceLineMaterial = new LineMaterial({
@@ -329,7 +323,7 @@ class Species3dMemoizer {
       linewidth: 1 / 16,
     });
 
-    const species3d = {
+    this.species3ds[species] = {
       innerSphereGeometry,
       innerSphereMaterial,
       outerSphereGeometry,
@@ -337,7 +331,6 @@ class Species3dMemoizer {
       outerSphereMaterial,
       forceLineMaterial,
     };
-    this.species3ds[species] = species3d;
-    return species3d;
+    return this.species3ds[species];
   }
 }
