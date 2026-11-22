@@ -13,6 +13,9 @@ I designed it for inspecting the inputs and outpus of machine learning interatom
 
 ## Development
 
+[MIT License](LICENSE.txt):
+this project is free and open source!
+
 This is a hobby project of mine I began from scratch.
 I started working on this project on 2026-11-12.
 
