@@ -7,6 +7,10 @@ class App {
   }
 
   run() {
+    document.getElementById("drop-click-text").innerText =
+      "DROP AN XYZ FILE OR CLICK HERE";
+    document.getElementById("file-input").disabled = "";
+
     window.addEventListener("dragover", (event) => {
       event.preventDefault();
     });
