@@ -19,4 +19,7 @@ this project is free and open source!
 This is a hobby project of mine I began from scratch.
 I started working on this project on 2026-11-12.
 
+By working on this project, I learned some programming concepts!
+Namely: JavaScript modules and the Three.js API.
+
 I did not use generative AI for this project.
