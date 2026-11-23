@@ -152,7 +152,11 @@ export class Visualizer {
     this.scene.remove(this.group);
     this.group = undefined;
 
-    this.forceLineGeometries.length = 0;
+    while (this.forceLineGeometries.length > 0) {
+      const { forceLineGeometry } = this.forceLineGeometries.pop();
+      forceLineGeometry.dispose();
+    }
+
     this.innerSpheres.length = 0;
   }
 
