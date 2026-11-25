@@ -44,8 +44,12 @@ export class XyzReader {
       atoms.push(atom);
     }
 
-    const energy =
-      metadata.energy === undefined ? undefined : Number(metadata.energy);
+    const dataEnergy =
+      metadata.energy ||
+      metadata.REF_energy ||
+      metadata.MACE_energy ||
+      undefined;
+    const energy = dataEnergy === undefined ? undefined : Number(dataEnergy);
 
     return { atoms, energy };
   }
@@ -139,7 +143,8 @@ export class XyzReader {
 
     const dataSpecies = data.species || [];
     const dataPos = data.pos || [];
-    const dataForces = data.forces || data.force || data.MACE_forces || [];
+    const dataForces =
+      data.forces || data.force || data.REF_forces || data.MACE_forces || [];
 
     const species =
       typeof dataSpecies[0] === "string" && dataSpecies.length === 1
