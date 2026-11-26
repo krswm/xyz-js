@@ -63,9 +63,8 @@ export class XyzReader {
         lattice = undefined;
       }
     }
-    console.log(lattice);
 
-    return { atoms, energy };
+    return { atoms, lattice, energy };
   }
 
   getNextLine() {

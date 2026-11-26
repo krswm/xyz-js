@@ -161,10 +161,46 @@ export class Visualizer {
   }
 
   drawMolecule(molecule) {
+    const latticeLineGroup = new THREE.Group();
     const forceLineGroup = new THREE.Group();
     const innerSphereGroup = new THREE.Group();
     const outerSphereDepthGroup = new THREE.Group();
     const outerSphereGroup = new THREE.Group();
+
+    if (molecule.lattice !== undefined) {
+      const [a1x, a1y, a1z, a2x, a2y, a2z, a3x, a3y, a3z] = molecule.lattice;
+
+      // TODO: dispose the material and the geometry.
+      const latticeLineMaterial = new LineMaterial({
+        color: "white",
+        worldUnits: true,
+        linewidth: 1 / 16,
+      });
+
+      const a1Geometry = new LineGeometry();
+      a1Geometry.setFromPoints([
+        new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(a1x, a1y, a1z),
+      ]);
+      const a2Geometry = new LineGeometry();
+      a2Geometry.setFromPoints([
+        new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(a2x, a2y, a2z),
+      ]);
+      const a3Geometry = new LineGeometry();
+      a3Geometry.setFromPoints([
+        new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(a3x, a3y, a3z),
+      ]);
+
+      const a1Line = new Line2(a1Geometry, latticeLineMaterial);
+      const a2Line = new Line2(a2Geometry, latticeLineMaterial);
+      const a3Line = new Line2(a3Geometry, latticeLineMaterial);
+
+      latticeLineGroup.add(a1Line);
+      latticeLineGroup.add(a2Line);
+      latticeLineGroup.add(a3Line);
+    }
 
     for (const atom of molecule.atoms) {
       if (atom.pos === undefined) {
@@ -225,6 +261,7 @@ export class Visualizer {
 
     this.group = new THREE.Group();
 
+    this.group.add(latticeLineGroup);
     this.group.add(forceLineGroup);
     this.group.add(innerSphereGroup);
     this.group.add(outerSphereDepthGroup);
