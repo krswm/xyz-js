@@ -177,29 +177,36 @@ export class Visualizer {
         linewidth: 1 / 16,
       });
 
-      const a1Geometry = new LineGeometry();
-      a1Geometry.setFromPoints([
-        new THREE.Vector3(0, 0, 0),
-        new THREE.Vector3(a1x, a1y, a1z),
-      ]);
-      const a2Geometry = new LineGeometry();
-      a2Geometry.setFromPoints([
-        new THREE.Vector3(0, 0, 0),
-        new THREE.Vector3(a2x, a2y, a2z),
-      ]);
-      const a3Geometry = new LineGeometry();
-      a3Geometry.setFromPoints([
-        new THREE.Vector3(0, 0, 0),
-        new THREE.Vector3(a3x, a3y, a3z),
-      ]);
+      // parallelepiped: new word I learned today
 
-      const a1Line = new Line2(a1Geometry, latticeLineMaterial);
-      const a2Line = new Line2(a2Geometry, latticeLineMaterial);
-      const a3Line = new Line2(a3Geometry, latticeLineMaterial);
+      const o = new THREE.Vector3(0, 0, 0);
+      const a1 = new THREE.Vector3(a1x, a1y, a1z);
+      const a2 = new THREE.Vector3(a2x, a2y, a2z);
+      const a3 = new THREE.Vector3(a3x, a3y, a3z);
 
-      latticeLineGroup.add(a1Line);
-      latticeLineGroup.add(a2Line);
-      latticeLineGroup.add(a3Line);
+      for (const [deltaVector, vector] of [
+        [a1, o],
+        [a1, a2],
+        [a1, a2.clone().add(a3)],
+        [a1, a3],
+        [a2, o],
+        [a2, a3],
+        [a2, a3.clone().add(a1)],
+        [a2, a1],
+        [a3, o],
+        [a3, a1],
+        [a3, a1.clone().add(a2)],
+        [a3, a2],
+      ]) {
+        console.log(vector);
+        const latticeLineGeometry = new LineGeometry();
+        latticeLineGeometry.setFromPoints([
+          vector,
+          vector.clone().add(deltaVector),
+        ]);
+        const latticeLine = new Line2(latticeLineGeometry, latticeLineMaterial);
+        latticeLineGroup.add(latticeLine);
+      }
     }
 
     for (const atom of molecule.atoms) {
