@@ -28,7 +28,9 @@ export class Visualizer {
 
     this.controls = new TrackballControls(this.camera, this.canvas);
 
+    this.latticeLineGroupMemoizer = new LatticeLineGroupMemoizer();
     this.species3dMemoizer = new Species3dMemoizer();
+
     this.group = undefined;
     this.forceLineGeometries = [];
     this.innerSpheres = [];
@@ -161,53 +163,10 @@ export class Visualizer {
   }
 
   drawMolecule(molecule) {
-    const latticeLineGroup = new THREE.Group();
     const forceLineGroup = new THREE.Group();
     const innerSphereGroup = new THREE.Group();
     const outerSphereDepthGroup = new THREE.Group();
     const outerSphereGroup = new THREE.Group();
-
-    if (molecule.lattice !== undefined) {
-      const [a1x, a1y, a1z, a2x, a2y, a2z, a3x, a3y, a3z] = molecule.lattice;
-
-      // TODO: dispose the material and the geometry.
-      const latticeLineMaterial = new LineMaterial({
-        color: "white",
-        worldUnits: true,
-        linewidth: 1 / 16,
-      });
-
-      // parallelepiped: new word I learned today
-
-      const o = new THREE.Vector3(0, 0, 0);
-      const a1 = new THREE.Vector3(a1x, a1y, a1z);
-      const a2 = new THREE.Vector3(a2x, a2y, a2z);
-      const a3 = new THREE.Vector3(a3x, a3y, a3z);
-
-      for (const [deltaVector, vector] of [
-        [a1, o],
-        [a1, a2],
-        [a1, a2.clone().add(a3)],
-        [a1, a3],
-        [a2, o],
-        [a2, a3],
-        [a2, a3.clone().add(a1)],
-        [a2, a1],
-        [a3, o],
-        [a3, a1],
-        [a3, a1.clone().add(a2)],
-        [a3, a2],
-      ]) {
-        console.log(vector);
-        const latticeLineGeometry = new LineGeometry();
-        latticeLineGeometry.setFromPoints([
-          vector,
-          vector.clone().add(deltaVector),
-        ]);
-        const latticeLine = new Line2(latticeLineGeometry, latticeLineMaterial);
-        latticeLineGroup.add(latticeLine);
-      }
-    }
 
     for (const atom of molecule.atoms) {
       if (atom.pos === undefined) {
@@ -268,7 +227,12 @@ export class Visualizer {
 
     this.group = new THREE.Group();
 
-    this.group.add(latticeLineGroup);
+    if (molecule.lattice !== undefined) {
+      const latticeLineGroup =
+        this.latticeLineGroupMemoizer.getLatticeLineGroup(molecule.lattice);
+      this.group.add(latticeLineGroup);
+    }
+
     this.group.add(forceLineGroup);
     this.group.add(innerSphereGroup);
     this.group.add(outerSphereDepthGroup);
@@ -296,6 +260,65 @@ export class Visualizer {
       innerSphere.lookAt(this.camera.position);
       innerSphere.up = this.camera.up;
     }
+  }
+}
+
+class LatticeLineGroupMemoizer {
+  constructor() {
+    this.latticeLineGroups = {};
+  }
+
+  getLatticeLineGroup(lattice) {
+    return (
+      this.latticeLineGroups[String(lattice)] ||
+      this.memoizeLatticeLineGroups(lattice)
+    );
+  }
+
+  memoizeLatticeLineGroups(lattice) {
+    console.log(`memoize ${lattice}`);
+
+    const latticeLineGroup = new THREE.Group();
+
+    const [a1x, a1y, a1z, a2x, a2y, a2z, a3x, a3y, a3z] = lattice;
+
+    const latticeLineMaterial = new LineMaterial({
+      color: "white",
+      worldUnits: true,
+      linewidth: 1 / 16,
+    });
+
+    const o = new THREE.Vector3(0, 0, 0);
+    const a1 = new THREE.Vector3(a1x, a1y, a1z);
+    const a2 = new THREE.Vector3(a2x, a2y, a2z);
+    const a3 = new THREE.Vector3(a3x, a3y, a3z);
+
+    for (const [deltaVector, vector] of [
+      [a1, o],
+      [a1, a2],
+      [a1, a2.clone().add(a3)],
+      [a1, a3],
+      [a2, o],
+      [a2, a3],
+      [a2, a3.clone().add(a1)],
+      [a2, a1],
+      [a3, o],
+      [a3, a1],
+      [a3, a1.clone().add(a2)],
+      [a3, a2],
+    ]) {
+      console.log(vector);
+      const latticeLineGeometry = new LineGeometry();
+      latticeLineGeometry.setFromPoints([
+        vector,
+        vector.clone().add(deltaVector),
+      ]);
+      const latticeLine = new Line2(latticeLineGeometry, latticeLineMaterial);
+      latticeLineGroup.add(latticeLine);
+    }
+
+    this.latticeLineGroups[String(lattice)] = latticeLineGroup;
+    return this.latticeLineGroups[String(lattice)];
   }
 }
 
