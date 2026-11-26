@@ -44,12 +44,26 @@ export class XyzReader {
       atoms.push(atom);
     }
 
-    const dataEnergy =
+    const metadataEnergy =
       metadata.energy ||
       metadata.REF_energy ||
       metadata.MACE_energy ||
       undefined;
-    const energy = dataEnergy === undefined ? undefined : Number(dataEnergy);
+    const energy =
+      metadataEnergy === undefined ? undefined : Number(metadataEnergy);
+
+    let lattice;
+    if (metadata.Lattice === undefined) {
+      lattice = undefined;
+    } else {
+      const splits = metadata.Lattice.split(" ");
+      if (splits.length === 9) {
+        lattice = splits.map((a) => Number(a));
+      } else {
+        lattice = undefined;
+      }
+    }
+    console.log(lattice);
 
     return { atoms, energy };
   }
