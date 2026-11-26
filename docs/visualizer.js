@@ -180,7 +180,7 @@ export class Visualizer {
         outerSphereDepthMaterial,
         outerSphereMaterial,
         forceLineMaterial,
-      } = this.species3dMemoizer.getSpecies3d(atom.species);
+      } = this.species3dMemoizer.get(atom.species);
 
       const innerSphere = new THREE.Mesh(
         innerSphereGeometry,
@@ -228,8 +228,9 @@ export class Visualizer {
     this.group = new THREE.Group();
 
     if (molecule.lattice !== undefined) {
-      const latticeLineGroup =
-        this.latticeLineGroupMemoizer.getLatticeLineGroup(molecule.lattice);
+      const latticeLineGroup = this.latticeLineGroupMemoizer.get(
+        molecule.lattice,
+      );
       this.group.add(latticeLineGroup);
     }
 
@@ -265,34 +266,30 @@ export class Visualizer {
 
 class LatticeLineGroupMemoizer {
   constructor() {
-    this.latticeLineGroups = {};
+    this.caches = {};
   }
 
-  getLatticeLineGroup(lattice) {
-    return (
-      this.latticeLineGroups[String(lattice)] ||
-      this.memoizeLatticeLineGroups(lattice)
-    );
+  get(lattice) {
+    return this.caches[String(lattice)] || this.memoize(lattice);
   }
 
-  memoizeLatticeLineGroups(lattice) {
+  memoize(lattice) {
     console.log(`memoize ${lattice}`);
 
-    const latticeLineGroup = new THREE.Group();
+    const latticeLineMaterial = new LineMaterial({
+      color: "#636363", // oklch(0.5 0.0 0.0) (gray)
+      worldUnits: true,
+      linewidth: 1 / 4,
+    });
 
     const [a1x, a1y, a1z, a2x, a2y, a2z, a3x, a3y, a3z] = lattice;
-
-    const latticeLineMaterial = new LineMaterial({
-      color: "white",
-      worldUnits: true,
-      linewidth: 1 / 16,
-    });
 
     const o = new THREE.Vector3(0, 0, 0);
     const a1 = new THREE.Vector3(a1x, a1y, a1z);
     const a2 = new THREE.Vector3(a2x, a2y, a2z);
     const a3 = new THREE.Vector3(a3x, a3y, a3z);
 
+    const latticeLineGroup = new THREE.Group();
     for (const [deltaVector, vector] of [
       [a1, o],
       [a1, a2],
@@ -307,31 +304,30 @@ class LatticeLineGroupMemoizer {
       [a3, a1.clone().add(a2)],
       [a3, a2],
     ]) {
-      console.log(vector);
       const latticeLineGeometry = new LineGeometry();
       latticeLineGeometry.setFromPoints([
         vector,
         vector.clone().add(deltaVector),
       ]);
+
       const latticeLine = new Line2(latticeLineGeometry, latticeLineMaterial);
       latticeLineGroup.add(latticeLine);
     }
-
-    this.latticeLineGroups[String(lattice)] = latticeLineGroup;
-    return this.latticeLineGroups[String(lattice)];
+    this.caches[String(lattice)] = latticeLineGroup;
+    return this.caches[String(lattice)];
   }
 }
 
 class Species3dMemoizer {
   constructor() {
-    this.species3ds = {};
+    this.caches = {};
   }
 
-  getSpecies3d(species) {
-    return this.species3ds[species] || this.memoizeSpecies3d(species);
+  get(species) {
+    return this.caches[species] || this.memoize(species);
   }
 
-  memoizeSpecies3d(species) {
+  memoize(species) {
     console.log(`memoize ${species}`);
 
     // `radius` is an approximate Van der Waals radius.
@@ -400,7 +396,7 @@ class Species3dMemoizer {
       linewidth: 1 / 16,
     });
 
-    this.species3ds[species] = {
+    this.caches[species] = {
       innerSphereGeometry,
       innerSphereMaterial,
       outerSphereGeometry,
@@ -408,6 +404,6 @@ class Species3dMemoizer {
       outerSphereMaterial,
       forceLineMaterial,
     };
-    return this.species3ds[species];
+    return this.caches[species];
   }
 }
